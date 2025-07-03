@@ -19,7 +19,6 @@ export async function extractMetadata(filePath: string, originalName: string) {
   let defaultTitle = path.parse(originalName).name;
   
   try {
-    // Використовуємо Calibre для отримання метаданих
     const { stdout } = await execAsync(`ebook-meta "${filePath}" --json`);
     const metadata: BookMetadata = JSON.parse(stdout);
 
