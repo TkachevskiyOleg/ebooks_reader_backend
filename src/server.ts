@@ -1,12 +1,12 @@
 import app from './app';
 import prisma from './prisma';
 import dotenv from 'dotenv';
+import fs from 'fs';
 
 dotenv.config();
 
 const PORT = process.env.PORT || 3000;
 
-import fs from 'fs';
 const uploadDir = 'uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);

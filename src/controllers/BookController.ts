@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 class BookController {
-static async uploadBook(req: Request, res: Response): Promise<void> {
+  static async uploadBook(req: Request, res: Response): Promise<void> {
     try {
       if (!req.file) {
         res.status(400).json({ error: 'Файл не завантажено' });
@@ -12,18 +12,16 @@ static async uploadBook(req: Request, res: Response): Promise<void> {
       }
 
       const { title, author, format } = req.body;
-      const filePath = `/uploads/${req.file.filename}`;
-      const originalFileName = req.file.originalname;
-
+      const fileName = req.file.filename;
+      const filePath = `/uploads/${fileName}`;
       const book = await prisma.book.create({
         data: {
           title,
-          author: author || null, 
+          author: author || null,
           format,
           filePath,
-          originalFileName,
-          coverPath: null 
-        } as any 
+          coverPath: null
+        }
       });
 
       res.status(201).json(book);
@@ -38,44 +36,42 @@ static async uploadBook(req: Request, res: Response): Promise<void> {
       const books = await prisma.book.findMany();
       res.json(books);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch books' });
+      res.status(500).json({ error: 'Помилка при отриманні книг' });
     }
   }
 
   static async getBookById(req: Request, res: Response): Promise<void> {
     try {
       const book = await prisma.book.findUnique({
-        where: { id: parseInt(req.params.id) },
-        include: { bookmarks: true, notes: true }
+        where: { id: parseInt(req.params.id) }
       });
       if (book) {
         res.json(book);
       } else {
-        res.status(404).json({ error: 'Book not found' });
+        res.status(404).json({ error: 'Книгу не знайдено' });
       }
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch book' });
+      res.status(500).json({ error: 'Помилка при отриманні книги' });
     }
   }
 
   static async deleteBook(req: Request, res: Response): Promise<void> {
-  try {
-    const book = await prisma.book.delete({
-      where: { id: parseInt(req.params.id) }
-    });
+    try {
+      const book = await prisma.book.delete({
+        where: { id: parseInt(req.params.id) }
+      });
+      const filePath = path.join(__dirname, '../../', book.filePath);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
 
-    const filePath = path.join(__dirname, '../../', book.filePath);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: 'Помилка при видаленні книги' });
     }
-
-    res.status(204).send();
-  } catch (error) {
-    res.status(500).json({ error: 'Помилка при видаленні книги' });
   }
-}
 
-static async downloadBook(req: Request, res: Response): Promise<void> {
+  static async downloadBook(req: Request, res: Response): Promise<void> {
     try {
       const book = await prisma.book.findUnique({
         where: { id: parseInt(req.params.id) }
@@ -87,13 +83,18 @@ static async downloadBook(req: Request, res: Response): Promise<void> {
       }
 
       const filePath = path.join(__dirname, '../../', book.filePath);
+      const fileName = book.filePath.split('/').pop() || 'book';
+      const encodedFileName = encodeURIComponent(fileName);
       
-      const originalFileName = (book as any).originalFileName || 'book';
-      
-      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(originalFileName)}"`);
+      res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodedFileName}`);
       res.setHeader('Content-Type', 'application/octet-stream');
-      
-      res.sendFile(filePath);
+      res.sendFile(filePath, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Помилка при завантаженні файлу' });

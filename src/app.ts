@@ -12,10 +12,14 @@ const app = express();
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(cors());
-
 app.use('/api/books', bookRoutes);
 app.use('/api/collections', collectionRoutes);
 
-app.use('/uploads', express.static('uploads'));
+
+app.use('/uploads', express.static('uploads', {
+  setHeaders: (res, filePath) => {
+    res.setHeader('Content-Disposition', 'attachment');
+  }
+}));
 
 export default app;
