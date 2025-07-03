@@ -2,34 +2,36 @@ import { Request, Response } from 'express';
 import prisma from '../prisma';
 import fs from 'fs';
 import path from 'path';
+import { extractMetadata } from '../utils/metadataExtractor';
 
 class BookController {
   static async uploadBook(req: Request, res: Response): Promise<void> {
-    try {
-      if (!req.file) {
-        res.status(400).json({ error: 'Файл не завантажено' });
-        return;
-      }
-
-      const { title, author, format } = req.body;
-      const fileName = req.file.filename;
-      const filePath = `/uploads/${fileName}`;
-      const book = await prisma.book.create({
-        data: {
-          title,
-          author: author || null,
-          format,
-          filePath,
-          coverPath: null
-        }
-      });
-
-      res.status(201).json(book);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Помилка при завантаженні книги' });
+  try {
+    if (!req.file) {
+      res.status(400).json({ error: 'Файл не завантажено' });
+      return;
     }
+
+    const filePath = req.file.path;
+    const { title, author, format, publisher, language } = await extractMetadata(filePath, req.file.originalname);
+
+    const book = await prisma.book.create({
+      data: {
+        title,
+        author,
+        format,
+        publisher,
+        language,
+        filePath: `/uploads/${req.file.filename}`
+      }
+    });
+
+    res.status(201).json(book);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Помилка при завантаженні книги' });
   }
+}
 
   static async getAllBooks(req: Request, res: Response): Promise<void> {
     try {
