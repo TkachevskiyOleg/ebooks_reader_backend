@@ -8,17 +8,18 @@ datasource db {
 }
 
 model Book {
-  id          Int      @id @default(autoincrement())
-  title       String
-  author      String?
-  filePath    String   @unique
-  format      String   // pdf, epub, fb2, txt, doc
-  coverPath   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  collections Collection[]
-  bookmarks   Bookmark[]
-  notes       Note[]
+  id               Int      @id @default(autoincrement())
+  title            String
+  author           String?
+  filePath         String   @unique
+  originalFileName String?  
+  format           String
+  coverPath        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  collections      Collection[]
+  bookmarks        Bookmark[]
+  notes            Note[]
 }
 
 model Collection {

@@ -4,16 +4,14 @@ import upload from '../middleware/uploadMiddleware';
 
 const router = Router();
 
-// Upload book (multipart/form-data)
 router.post('/', upload.single('file'), BookController.uploadBook);
 
-// Get all books
 router.get('/', BookController.getAllBooks);
 
-// Get book by ID
 router.get('/:id', BookController.getBookById);
 
-// Delete book
 router.delete('/:id', BookController.deleteBook);
+
+router.get('/file/:id', BookController.downloadBook);
 
 export default router;

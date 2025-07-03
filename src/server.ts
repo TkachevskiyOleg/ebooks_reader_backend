@@ -6,7 +6,6 @@ dotenv.config();
 
 const PORT = process.env.PORT || 3000;
 
-// Create uploads directory if not exists
 import fs from 'fs';
 const uploadDir = 'uploads';
 if (!fs.existsSync(uploadDir)) {

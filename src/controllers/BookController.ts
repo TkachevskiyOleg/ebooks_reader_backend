@@ -4,29 +4,32 @@ import fs from 'fs';
 import path from 'path';
 
 class BookController {
-  static async uploadBook(req: Request, res: Response): Promise<void> {
+static async uploadBook(req: Request, res: Response): Promise<void> {
     try {
       if (!req.file) {
-        res.status(400).json({ error: 'No file uploaded' });
+        res.status(400).json({ error: 'Файл не завантажено' });
         return;
       }
 
       const { title, author, format } = req.body;
       const filePath = `/uploads/${req.file.filename}`;
+      const originalFileName = req.file.originalname;
 
       const book = await prisma.book.create({
         data: {
           title,
-          author,
+          author: author || null, 
           format,
-          filePath
-        }
+          filePath,
+          originalFileName,
+          coverPath: null 
+        } as any 
       });
 
       res.status(201).json(book);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ error: 'Failed to upload book' });
+      res.status(500).json({ error: 'Помилка при завантаженні книги' });
     }
   }
 
@@ -56,19 +59,44 @@ class BookController {
   }
 
   static async deleteBook(req: Request, res: Response): Promise<void> {
+  try {
+    const book = await prisma.book.delete({
+      where: { id: parseInt(req.params.id) }
+    });
+
+    const filePath = path.join(__dirname, '../../', book.filePath);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: 'Помилка при видаленні книги' });
+  }
+}
+
+static async downloadBook(req: Request, res: Response): Promise<void> {
     try {
-      const book = await prisma.book.delete({
+      const book = await prisma.book.findUnique({
         where: { id: parseInt(req.params.id) }
       });
 
-      const filePath = path.join(__dirname, '../../', book.filePath);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      if (!book) {
+        res.status(404).json({ error: 'Книгу не знайдено' });
+        return;
       }
 
-      res.status(204).send();
+      const filePath = path.join(__dirname, '../../', book.filePath);
+      
+      const originalFileName = (book as any).originalFileName || 'book';
+      
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(originalFileName)}"`);
+      res.setHeader('Content-Type', 'application/octet-stream');
+      
+      res.sendFile(filePath);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to delete book' });
+      console.error(error);
+      res.status(500).json({ error: 'Помилка при завантаженні файлу' });
     }
   }
 }
