@@ -61,7 +61,6 @@ class BookController {
         where: { id: parseInt(req.params.id) }
       });
 
-      // Delete physical file
       const filePath = path.join(__dirname, '../../', book.filePath);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
