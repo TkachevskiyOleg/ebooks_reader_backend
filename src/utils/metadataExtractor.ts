@@ -14,17 +14,19 @@ interface BookMetadata {
 }
 
 export async function extractMetadata(filePath: string, originalName: string) {
-  if (!/^[a-zA-Z0-9_\-\.\/]+$/.test(filePath)) {
-    throw new Error('Небезпечний шлях до файлу');
-  }
-
   const extension = path.extname(originalName).toLowerCase();
   const format = extension.replace('.', '');
-  let defaultTitle = path.parse(originalName).name;
-  
+  const defaultTitle = path.parse(originalName).name;
+
+  console.log('[extractMetadata] path:', filePath);
+  console.log('[extractMetadata] original name:', originalName);
+
   try {
     const { stdout } = await execAsync(`ebook-meta "${filePath}" --json`);
+    console.log('[extractMetadata] Raw stdout:', stdout);
+
     const metadata: BookMetadata = JSON.parse(stdout);
+    console.log('[extractMetadata] Parsed metadata:', metadata);
 
     return {
       title: metadata.title || defaultTitle,
@@ -34,7 +36,7 @@ export async function extractMetadata(filePath: string, originalName: string) {
       language: metadata.languages?.[0] || null
     };
   } catch (error) {
-    console.error('Помилка отримання метаданих:', error);
+    console.error('[extractMetadata] ERROR:', error);
     return {
       title: defaultTitle,
       author: null,

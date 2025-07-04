@@ -14,9 +14,14 @@ class BookController {
 
     const filePath = req.file.path;
     const fileName = req.file.filename;
-    
-    const { title, author, format, publisher, language } = 
+
+    console.log('[uploadBook] filePath:', filePath);
+    console.log('[uploadBook] originalName:', req.file.originalname);
+
+    const { title, author, format, publisher, language } =
       await extractMetadata(filePath, req.file.originalname);
+
+    console.log('[uploadBook] metadata:', { title, author, format, publisher, language });
 
     const book = await prisma.book.create({
       data: {
@@ -31,10 +36,11 @@ class BookController {
 
     res.status(201).json(book);
   } catch (error) {
-    console.error(error);
+    console.error('[uploadBook] ERROR:', error);
     res.status(500).json({ error: 'Помилка при завантаженні книги' });
   }
 }
+
  static async getAllBooks(req: Request, res: Response): Promise<void> {
   try {
     const books = await prisma.book.findMany();
