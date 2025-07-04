@@ -27,14 +27,20 @@ export default class CollectionController {
     }
   }
 
-  static async getCollections(request: Request, response: Response) {
-    try {
-      const collections = await prisma.collection.findMany({
-        include: { books: true }
-      });
-      response.json(collections);
-    } catch (error) {
-      response.status(500).json({ error: 'Помилка завантаження колекцій' });
+  static async getCollectionById(request: Request, response: Response) {
+  try {
+    const collection = await prisma.collection.findUnique({
+      where: { id: parseInt(request.params.id) },
+      include: { books: true }
+    });
+
+    if (collection) {
+      response.json(collection);
+    } else {
+      response.status(404).json({ error: 'Колекцію не знайдено' });
     }
+  } catch (error) {
+    response.status(500).json({ error: 'Помилка завантаження колекції' });
   }
+}
 }

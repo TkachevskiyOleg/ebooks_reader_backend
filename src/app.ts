@@ -13,6 +13,7 @@ const app = express();
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(cors());
+
 app.use('/api/books', bookRoutes);
 app.use('/api/collections', collectionRoutes);
 app.use('/api/mobile', mobileRoutes);
