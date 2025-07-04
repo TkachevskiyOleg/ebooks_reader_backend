@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { Request, Response } from 'express';
+import CollectionController from '../controllers/CollectionController';
 
 const router = Router();
 
-router.get('/', (req: Request, res: Response) => {
-  res.json({ message: 'Collections endpoint' });
-});
+router.post('/', CollectionController.createCollection);
+router.get('/', CollectionController.getCollections);
+router.post('/:collectionId/books/:bookId', CollectionController.addBook);
 
 export default router;

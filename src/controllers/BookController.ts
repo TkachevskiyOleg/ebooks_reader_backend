@@ -13,7 +13,10 @@ class BookController {
     }
 
     const filePath = req.file.path;
-    const { title, author, format, publisher, language } = await extractMetadata(filePath, req.file.originalname);
+    const fileName = req.file.filename;
+    
+    const { title, author, format, publisher, language } = 
+      await extractMetadata(filePath, req.file.originalname);
 
     const book = await prisma.book.create({
       data: {
@@ -22,7 +25,7 @@ class BookController {
         format,
         publisher,
         language,
-        filePath: `/uploads/${req.file.filename}`
+        filePath: `/uploads/${fileName}`
       }
     });
 
@@ -32,15 +35,14 @@ class BookController {
     res.status(500).json({ error: 'Помилка при завантаженні книги' });
   }
 }
-
-  static async getAllBooks(req: Request, res: Response): Promise<void> {
-    try {
-      const books = await prisma.book.findMany();
-      res.json(books);
-    } catch (error) {
-      res.status(500).json({ error: 'Помилка при отриманні книг' });
-    }
+ static async getAllBooks(req: Request, res: Response): Promise<void> {
+  try {
+    const books = await prisma.book.findMany();
+    res.json(books);
+  } catch (error) {
+    res.status(500).json({ error: 'Помилка при отриманні книг' });
   }
+}
 
   static async getBookById(req: Request, res: Response): Promise<void> {
     try {
@@ -73,33 +75,31 @@ class BookController {
     }
   }
 
-  static async downloadBook(req: Request, res: Response): Promise<void> {
-    try {
-      const book = await prisma.book.findUnique({
-        where: { id: parseInt(req.params.id) }
-      });
+  static async downloadBook(request: Request, response: Response) {
+  try {
+    const book = await prisma.book.findUnique({
+      where: { id: parseInt(request.params.id) }
+    });
 
-      if (!book) {
-        res.status(404).json({ error: 'Книгу не знайдено' });
-        return;
-      }
+    if (!book) {
+      return response.status(404).json({ error: 'Книгу не знайдено' });
+    }
 
-      const filePath = path.join(__dirname, '../../', book.filePath);
-      const fileName = book.filePath.split('/').pop() || 'book';
-      const encodedFileName = encodeURIComponent(fileName);
-      
-      res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodedFileName}`);
-      res.setHeader('Content-Type', 'application/octet-stream');
-      res.sendFile(filePath, {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Помилка при завантаженні файлу' });
+    const resolvedPath = path.resolve(__dirname, '../../', book.filePath);
+    
+    if (!resolvedPath.startsWith(path.resolve('uploads/'))) {
+      return response.status(400).json({ error: 'Неприпустимий шлях' });
+    }
+
+    const fileName = book.filePath.split('/').pop() || 'book';
+    const encodedFileName = encodeURIComponent(fileName);
+    
+    response.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodedFileName}`);
+    response.setHeader('Content-Type', 'application/octet-stream');
+    response.sendFile(resolvedPath);
+  } catch (error) {
+    console.error(error);
+    response.status(500).json({ error: 'Помилка при завантаженні файлу' });
     }
   }
 }

@@ -14,8 +14,12 @@ interface BookMetadata {
 }
 
 export async function extractMetadata(filePath: string, originalName: string) {
-  const ext = path.extname(originalName).toLowerCase();
-  const format = ext.replace('.', '');
+  if (!/^[a-zA-Z0-9_\-\.\/]+$/.test(filePath)) {
+    throw new Error('Небезпечний шлях до файлу');
+  }
+
+  const extension = path.extname(originalName).toLowerCase();
+  const format = extension.replace('.', '');
   let defaultTitle = path.parse(originalName).name;
   
   try {
@@ -26,15 +30,17 @@ export async function extractMetadata(filePath: string, originalName: string) {
       title: metadata.title || defaultTitle,
       author: metadata.authors?.join(', ') || null,
       format,
-      publisher: metadata.publisher,
-      language: metadata.languages?.[0]
+      publisher: metadata.publisher || null,
+      language: metadata.languages?.[0] || null
     };
   } catch (error) {
     console.error('Помилка отримання метаданих:', error);
     return {
       title: defaultTitle,
       author: null,
-      format
+      format,
+      publisher: null,
+      language: null
     };
   }
 }
