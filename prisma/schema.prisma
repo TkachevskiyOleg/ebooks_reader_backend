@@ -9,8 +9,9 @@ generator client {
 
 model User {
   id          Int              @id @default(autoincrement())
-  email       String           @unique
+  login       String           @unique
   password    String
+  refreshToken String?
   books       Book[]
   collections Collection[]
   progress    ReadingProgress[]
@@ -25,7 +26,9 @@ model Book {
   format      String
   publisher   String?
   language    String?
+  storagePath String?            @unique 
   filePath    String            @unique
+  originalFilePath String?     
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   collections Collection[]

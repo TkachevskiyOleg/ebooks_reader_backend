@@ -1,9 +1,157 @@
 import { Router } from 'express';
 import prisma from '../prisma';
+import { authMiddleware } from '../middleware/authMiddleware';
+
+/**
+ * @swagger
+ * tags:
+ *   name: Mobile
+ *   description: Мобільні маршрути для синхронізації прогресу, закладок, нотаток
+ */
+
+/**
+ * @swagger
+ * /api/mobile/sync-progress:
+ *   post:
+ *     summary: Синхронізувати прогрес читання
+ *     tags: [Mobile]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               bookId:
+ *                 type: integer
+ *               progress:
+ *                 type: number
+ *               position:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Прогрес синхронізовано
+ */
+
+/**
+ * @swagger
+ * /api/mobile/bookmarks:
+ *   get:
+ *     summary: Отримати закладки
+ *     tags: [Mobile]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: bookId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Список закладок
+ */
+
+/**
+ * @swagger
+ * /api/mobile/bookmarks:
+ *   post:
+ *     summary: Створити закладку
+ *     tags: [Mobile]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               bookId:
+ *                 type: integer
+ *               position:
+ *                 type: string
+ *               note:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Закладку створено
+ */
+
+/**
+ * @swagger
+ * /api/mobile/bookmarks/{id}:
+ *   delete:
+ *     summary: Видалити закладку
+ *     tags: [Mobile]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       204:
+ *         description: Закладку видалено
+ */
+
+/**
+ * @swagger
+ * /api/mobile/notes:
+ *   get:
+ *     summary: Отримати нотатки
+ *     tags: [Mobile]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: bookId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Список нотаток
+ */
+
+/**
+ * @swagger
+ * /api/mobile/sync-notes:
+ *   post:
+ *     summary: Синхронізувати нотатки
+ *     tags: [Mobile]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               bookId:
+ *                 type: integer
+ *               notes:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     content:
+ *                       type: string
+ *                     position:
+ *                       type: string
+ *     responses:
+ *       200:
+ *         description: Нотатки синхронізовано
+ */
 
 const router = Router();
 
-router.post('/sync-progress', async (request, response) => {
+router.post('/sync-progress', authMiddleware, async (request, response) => {
   try {
     const { bookId, progress, position, userId } = request.body;
 
@@ -34,7 +182,7 @@ router.post('/sync-progress', async (request, response) => {
   }
 });
 
-router.get('/bookmarks', async (request, response) => {
+router.get('/bookmarks', authMiddleware, async (request, response) => {
   try {
     const { bookId, userId } = request.query;
     
@@ -55,7 +203,7 @@ router.get('/bookmarks', async (request, response) => {
   }
 });
 
-router.post('/bookmarks', async (request, response) => {
+router.post('/bookmarks', authMiddleware, async (request, response) => {
   try {
     const { bookId, userId, position, note } = request.body;
     
@@ -74,7 +222,7 @@ router.post('/bookmarks', async (request, response) => {
   }
 });
 
-router.delete('/bookmarks/:id', async (request, response) => {
+router.delete('/bookmarks/:id', authMiddleware, async (request, response) => {
   try {
     await prisma.bookmark.delete({
       where: { id: parseInt(request.params.id) }
@@ -85,7 +233,7 @@ router.delete('/bookmarks/:id', async (request, response) => {
   }
 });
 
-router.get('/notes', async (request, response) => {
+router.get('/notes', authMiddleware, async (request, response) => {
   try {
     const { bookId, userId } = request.query;
     
@@ -105,7 +253,7 @@ router.get('/notes', async (request, response) => {
   }
 });
 
-router.post('/sync-notes', async (request, response) => {
+router.post('/sync-notes', authMiddleware, async (request, response) => {
   try {
     const { bookId, userId, notes } = request.body;
     await prisma.note.deleteMany({
