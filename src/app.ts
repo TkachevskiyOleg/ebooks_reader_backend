@@ -6,8 +6,9 @@ import collectionRoutes from './routes/collectionRoutes';
 import mobileRoutes from './routes/mobileRoutes';
 import authRoutes from './routes/authRoutes';
 import swaggerUi from 'swagger-ui-express';
-import swaggerJsdoc from 'swagger-jsdoc';
+import yaml from 'yamljs';
 import dotenv from 'dotenv';
+import path from 'path';
 
 dotenv.config();
 
@@ -22,29 +23,8 @@ app.use('/api/collections', collectionRoutes);
 app.use('/api/mobile', mobileRoutes);
 app.use('/api/auth', authRoutes);
 
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Ebooks Reader Backend API',
-      version: '1.0.0',
-      description: 'Документація REST API для мобільного рідера книг',
-    },
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-        },
-      },
-    },
-    security: [{ bearerAuth: [] }],
-  },
-  apis: ['./src/routes/*.ts'],
-};
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yaml'));
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use('/uploads', express.static('uploads', {
   setHeaders: (response, filePath) => {
