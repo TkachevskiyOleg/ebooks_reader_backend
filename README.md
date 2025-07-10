@@ -31,7 +31,6 @@
 git clone https://github.com/your-username/ebooks_reader_backend.git
 cd ebooks_reader_backend
 
-# Встановлення залежностей
 npm install
 
 ```

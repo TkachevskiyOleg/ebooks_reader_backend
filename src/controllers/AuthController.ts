@@ -90,9 +90,7 @@ class AuthController {
       if (!user) {
         return res.status(401).json({ error: 'Невірний refresh token' });
       }
-      // Генеруємо новий access token
       const token = jwt.sign({ userId: user.id, login: user.login }, JWT_SECRET, { expiresIn: '7d' });
-      // (Опціонально) можна згенерувати новий refresh token і зберегти
       res.json({ token });
     } catch (error) {
       res.status(500).json({ error: 'Помилка оновлення токена' });
