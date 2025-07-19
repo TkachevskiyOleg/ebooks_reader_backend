@@ -81,6 +81,20 @@ components:
           type: string
         position:
           type: string
+    ReadingProgress:
+      type: object
+      properties:
+        id:
+          type: integer
+        bookId:
+          type: integer
+        userId:
+          type: integer
+        progress:
+          type: number
+          format: float
+        position:
+          type: string
     Error:
       type: object
       properties:
@@ -198,94 +212,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /api/books:
-    post:
-      summary: Додати книгу
-      tags: [Books]
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-      responses:
-        201:
-          description: Книга додана
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Book'
+  /api/collections:
     get:
-      summary: Список книг користувача
-      tags: [Books]
+      summary: Отримання всіх колекцій користувача
+      tags: [Collections]
       security:
         - bearerAuth: []
       responses:
         200:
-          description: Список книг
+          description: Список колекцій
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Book'
-  /api/books/{id}:
-    get:
-      summary: Отримати книгу за id
-      tags: [Books]
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Книга
+                  $ref: '#/components/schemas/Collection'
+        401:
+          description: Неавторизовано
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Book'
-    delete:
-      summary: Видалити книгу
-      tags: [Books]
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        204:
-          description: Книгу видалено
-  /api/books/file/{id}:
-    get:
-      summary: Завантажити файл книги
-      tags: [Books]
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Файл книги
-  /api/collections:
+                $ref: '#/components/schemas/Error'
     post:
-      summary: Створити колекцію
+      summary: Створення нової колекції
       tags: [Collections]
       security:
         - bearerAuth: []
@@ -305,48 +254,162 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Collection'
+        400:
+          description: Помилка валідації
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/collections/{id}:
     get:
-      summary: Отримати колекцію за id
+      summary: Отримання колекції по ID
       tags: [Collections]
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
           schema:
             type: integer
       responses:
         200:
-          description: Колекція
+          description: Дані колекції
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Collection'
-  /api/collections/{collectionId}/books/{bookId}:
-    post:
-      summary: Додати книгу до колекції
+        404:
+          description: Колекцію не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Видалення колекції
       tags: [Collections]
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: collectionId
-          required: true
-          schema:
-            type: integer
-        - in: path
-          name: bookId
+        - name: id
+          in: path
           required: true
           schema:
             type: integer
       responses:
+        204:
+          description: Колекцію видалено
+        404:
+          description: Колекцію не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/collections/{collectionId}/books/{bookId}:
+    post:
+      summary: Додавання книги в колекцію
+      tags: [Collections]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        204:
+          description: Книгу додано в колекцію
+        404:
+          description: Колекцію або книгу не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Видалення книги з колекції
+      tags: [Collections]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        204:
+          description: Книгу видалено з колекції
+        404:
+          description: Колекцію не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/mobile/progress:
+    get:
+      summary: Отримання прогресу всіх книг користувача
+      tags: [Mobile]
+      security:
+        - bearerAuth: []
+      responses:
         200:
-          description: Книгу додано до колекції
+          description: Список прогресу
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReadingProgress'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/mobile/sync-progress:
     post:
-      summary: Синхронізувати прогрес читання
+      summary: Синхронізація прогресу читання
       tags: [Mobile]
       security:
         - bearerAuth: []
@@ -361,23 +424,45 @@ paths:
                   type: integer
                 progress:
                   type: number
+                  format: float
+                  minimum: 0
+                  maximum: 1
                 position:
                   type: string
       responses:
         200:
           description: Прогрес синхронізовано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        400:
+          description: Помилка валідації
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/mobile/bookmarks:
     get:
-      summary: Отримати закладки
+      summary: Отримання закладок
       tags: [Mobile]
       security:
         - bearerAuth: []
       parameters:
-        - in: query
-          name: bookId
-          required: true
+        - name: bookId
+          in: query
           schema:
             type: integer
+          description: ID книги (опціонально - якщо не вказано, повертаються всі закладки)
       responses:
         200:
           description: Список закладок
@@ -387,8 +472,20 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Bookmark'
+        400:
+          description: Помилка валідації
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     post:
-      summary: Створити закладку
+      summary: Створення закладки
       tags: [Mobile]
       security:
         - bearerAuth: []
@@ -412,33 +509,110 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Bookmark'
+        400:
+          description: Помилка валідації
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Книгу не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/mobile/bookmarks/{id}:
-    delete:
-      summary: Видалити закладку
+    put:
+      summary: Редагування закладки
       tags: [Mobile]
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                position:
+                  type: string
+                note:
+                  type: string
+      responses:
+        200:
+          description: Закладку оновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bookmark'
+        400:
+          description: Помилка валідації
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Закладку не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Видалення закладки
+      tags: [Mobile]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
           required: true
           schema:
             type: integer
       responses:
         204:
           description: Закладку видалено
+        404:
+          description: Закладку не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/mobile/notes:
     get:
-      summary: Отримати нотатки
+      summary: Отримання нотаток
       tags: [Mobile]
       security:
         - bearerAuth: []
       parameters:
-        - in: query
-          name: bookId
-          required: true
+        - name: bookId
+          in: query
           schema:
             type: integer
+          description: ID книги (опціонально - якщо не вказано, повертаються всі нотатки)
       responses:
         200:
           description: Список нотаток
@@ -448,9 +622,138 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Note'
+        400:
+          description: Помилка валідації
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Створення нотатки
+      tags: [Mobile]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bookId:
+                  type: integer
+                content:
+                  type: string
+                position:
+                  type: string
+      responses:
+        201:
+          description: Нотатку створено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        400:
+          description: Помилка валідації
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Книгу не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/mobile/notes/{id}:
+    put:
+      summary: Редагування нотатки
+      tags: [Mobile]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                position:
+                  type: string
+      responses:
+        200:
+          description: Нотатку оновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        400:
+          description: Помилка валідації
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Нотатку не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Видалення нотатки
+      tags: [Mobile]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        204:
+          description: Нотатку видалено
+        404:
+          description: Нотатку не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/mobile/sync-notes:
     post:
-      summary: Синхронізувати нотатки
+      summary: Синхронізація нотаток
       tags: [Mobile]
       security:
         - bearerAuth: []
@@ -474,4 +777,164 @@ paths:
                         type: string
       responses:
         200:
-          description: Нотатки синхронізовано 
+          description: Нотатки синхронізовано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  count:
+                    type: integer
+        400:
+          description: Помилка валідації
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Книгу не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/books:
+    post:
+      summary: Додати книгу
+      tags: [Books]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        201:
+          description: Книга додана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Список книг користувача
+      tags: [Books]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Список книг
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/books/{id}:
+    get:
+      summary: Отримати книгу за id
+      tags: [Books]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Книга
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        404:
+          description: Книгу не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Видалити книгу
+      tags: [Books]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        204:
+          description: Книгу видалено
+        404:
+          description: Книгу не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/books/file/{id}:
+    get:
+      summary: Завантажити файл книги
+      tags: [Books]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Файл книги
+        404:
+          description: Книгу не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 
