@@ -20,7 +20,6 @@ export default class CollectionController {
       });
       response.status(201).json(collection);
     } catch (error) {
-      console.error('Помилка створення колекції:', error);
       response.status(500).json({ error: 'Помилка створення колекції' });
     }
   }
@@ -46,7 +45,6 @@ export default class CollectionController {
 
       response.json(collections);
     } catch (error) {
-      console.error('Помилка завантаження колекцій:', error);
       response.status(500).json({ error: 'Помилка завантаження колекцій' });
     }
   }
@@ -72,19 +70,18 @@ export default class CollectionController {
               title: true,
               author: true,
               format: true,
-              createdAt: true
+              imageUrl: true
             }
           }
         }
       });
-
-      if (collection) {
-        response.json(collection);
-      } else {
-        response.status(404).json({ error: 'Колекцію не знайдено' });
+      
+      if (!collection) {
+        return response.status(404).json({ error: 'Колекцію не знайдено' });
       }
+      
+      response.json(collection);
     } catch (error) {
-      console.error('Помилка завантаження колекції:', error);
       response.status(500).json({ error: 'Помилка завантаження колекції' });
     }
   }
@@ -98,7 +95,8 @@ export default class CollectionController {
       if (isNaN(collectionId) || isNaN(bookId)) {
         return response.status(400).json({ error: 'Невірний ID колекції або книги' });
       }
-            const collection = await prisma.collection.findFirst({
+      
+      const collection = await prisma.collection.findFirst({
         where: { 
           id: collectionId,
           userId: userId
@@ -108,6 +106,7 @@ export default class CollectionController {
       if (!collection) {
         return response.status(404).json({ error: 'Колекцію не знайдено' });
       }
+      
       const book = await prisma.book.findFirst({
         where: { 
           id: bookId,
@@ -122,12 +121,14 @@ export default class CollectionController {
       await prisma.collection.update({
         where: { id: collectionId },
         data: {
-          books: { connect: { id: bookId } }
+          books: {
+            connect: { id: bookId }
+          }
         }
       });
-      response.status(204).send();
+      
+      response.status(200).json({ message: 'Книгу додано до колекції' });
     } catch (error) {
-      console.error('Помилка додавання книги:', error);
       response.status(500).json({ error: 'Помилка додавання книги' });
     }
   }
@@ -140,7 +141,8 @@ export default class CollectionController {
       
       if (isNaN(collectionId) || isNaN(bookId)) {
         return response.status(400).json({ error: 'Невірний ID колекції або книги' });
-      }      
+      }
+      
       const collection = await prisma.collection.findFirst({
         where: { 
           id: collectionId,
@@ -155,12 +157,14 @@ export default class CollectionController {
       await prisma.collection.update({
         where: { id: collectionId },
         data: {
-          books: { disconnect: { id: bookId } }
+          books: {
+            disconnect: { id: bookId }
+          }
         }
       });
-      response.status(204).send();
+      
+      response.status(200).json({ message: 'Книгу видалено з колекції' });
     } catch (error) {
-      console.error('Помилка видалення книги з колекції:', error);
       response.status(500).json({ error: 'Помилка видалення книги з колекції' });
     }
   }
@@ -172,7 +176,8 @@ export default class CollectionController {
       
       if (isNaN(collectionId)) {
         return response.status(400).json({ error: 'Невірний ID колекції' });
-      }      
+      }
+      
       const collection = await prisma.collection.findFirst({
         where: { 
           id: collectionId,
@@ -187,9 +192,9 @@ export default class CollectionController {
       await prisma.collection.delete({
         where: { id: collectionId }
       });
+      
       response.status(204).send();
     } catch (error) {
-      console.error('Помилка видалення колекції:', error);
       response.status(500).json({ error: 'Помилка видалення колекції' });
     }
   }

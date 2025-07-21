@@ -1,8 +1,14 @@
 openapi: 3.0.0
 info:
   title: Ebooks Reader Backend API
-  version: 1.0.0
-  description: Документація REST API для мобільного рідера книг
+  version: 1.0.1
+  description: |
+    Оновлена документація REST API для мобільного рідера книг. 
+    - Додано multipart upload для книги та обкладинки (cover)
+    - Додано підтримку Cloudinary для covers
+    - Додано публічну бібліотеку книг (marketplace)
+    - Додано поля isPublic, imageUrl
+    - Оновлено всі схеми та приклади
 servers:
   - url: http://localhost:3000
 components:
@@ -42,6 +48,10 @@ components:
           type: string
         userId:
           type: integer
+        isPublic:
+          type: boolean
+        imageUrl:
+          type: string
     Collection:
       type: object
       properties:
@@ -807,7 +817,7 @@ paths:
                 $ref: '#/components/schemas/Error'
   /api/books:
     post:
-      summary: Додати книгу
+      summary: Додати книгу (з обкладинкою)
       tags: [Books]
       security:
         - bearerAuth: []
@@ -821,6 +831,14 @@ paths:
                 file:
                   type: string
                   format: binary
+                  description: Файл книги (pdf, epub, fb2)
+                cover:
+                  type: string
+                  format: binary
+                  description: Обкладинка (завантажується у Cloudinary)
+                isPublic:
+                  type: boolean
+                  description: Чи буде книга публічною
       responses:
         201:
           description: Книга додана
@@ -828,6 +846,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Book'
+        400:
+          description: Помилка валідації
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         401:
           description: Неавторизовано
           content:
@@ -848,6 +872,101 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Book'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/books/public:
+    get:
+      summary: Список публічних книг (маркетплейс)
+      tags: [Books]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          description: Номер сторінки
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+          description: Кількість на сторінку
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Пошук за назвою/автором
+      responses:
+        200:
+          description: Список публічних книг
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/books/public/file/{id}:
+    get:
+      summary: Завантажити файл публічної книги
+      tags: [Books]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Файл книги
+        404:
+          description: Книгу не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Неавторизовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/books/add-to-my-books/{id}:
+    post:
+      summary: Додати публічну книгу до своєї бібліотеки
+      tags: [Books]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        201:
+          description: Книга додана до бібліотеки користувача
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        404:
+          description: Книгу не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         401:
           description: Неавторизовано
           content:

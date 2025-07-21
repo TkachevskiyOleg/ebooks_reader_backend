@@ -39,7 +39,6 @@ router.post('/sync-progress', authMiddleware, async (request: AuthRequest, respo
 
     response.status(200).json({ success: true });
   } catch (error) {
-    console.error('Помилка синхронізації прогресу:', error);
     response.status(500).json({ error: 'Помилка синхронізації прогресу' });
   }
 });
@@ -56,7 +55,6 @@ router.get('/progress', authMiddleware, async (request: AuthRequest, response) =
             id: true,
             title: true,
             author: true,
-            format: true
           }
         }
       },
@@ -65,7 +63,6 @@ router.get('/progress', authMiddleware, async (request: AuthRequest, response) =
     
     response.json(progress);
   } catch (error) {
-    console.error('Помилка завантаження прогресу:', error);
     response.status(500).json({ error: 'Помилка завантаження прогресу' });
   }
 });
@@ -117,7 +114,6 @@ router.get('/bookmarks', authMiddleware, async (request: AuthRequest, response) 
       response.json(bookmarks);
     }
   } catch (error) {
-    console.error('Помилка завантаження закладок:', error);
     response.status(500).json({ error: 'Помилка завантаження закладок' });
   }
 });
@@ -156,7 +152,6 @@ router.post('/bookmarks', authMiddleware, async (request: AuthRequest, response)
     
     response.status(201).json(bookmark);
   } catch (error) {
-    console.error('Помилка створення закладки:', error);
     response.status(500).json({ error: 'Помилка створення закладки' });
   }
 });
@@ -195,7 +190,6 @@ router.put('/bookmarks/:id', authMiddleware, async (request: AuthRequest, respon
     
     response.json(updatedBookmark);
   } catch (error) {
-    console.error('Помилка оновлення закладки:', error);
     response.status(500).json({ error: 'Помилка оновлення закладки' });
   }
 });
@@ -224,7 +218,6 @@ router.delete('/bookmarks/:id', authMiddleware, async (request: AuthRequest, res
     });
     response.status(204).send();
   } catch (error) {
-    console.error('Помилка видалення закладки:', error);
     response.status(500).json({ error: 'Помилка видалення закладки' });
   }
 });
@@ -274,7 +267,6 @@ router.get('/notes', authMiddleware, async (request: AuthRequest, response) => {
       response.json(notes);
     }
   } catch (error) {
-    console.error('Помилка завантаження нотаток:', error);
     response.status(500).json({ error: 'Помилка завантаження нотаток' });
   }
 });
@@ -317,7 +309,6 @@ router.post('/notes', authMiddleware, async (request: AuthRequest, response) => 
     
     response.status(201).json(note);
   } catch (error) {
-    console.error('Помилка створення нотатки:', error);
     response.status(500).json({ error: 'Помилка створення нотатки' });
   }
 });
@@ -360,7 +351,6 @@ router.put('/notes/:id', authMiddleware, async (request: AuthRequest, response) 
     
     response.json(updatedNote);
   } catch (error) {
-    console.error('Помилка оновлення нотатки:', error);
     response.status(500).json({ error: 'Помилка оновлення нотатки' });
   }
 });
@@ -389,7 +379,6 @@ router.delete('/notes/:id', authMiddleware, async (request: AuthRequest, respons
     });
     response.status(204).send();
   } catch (error) {
-    console.error('Помилка видалення нотатки:', error);
     response.status(500).json({ error: 'Помилка видалення нотатки' });
   }
 });
@@ -438,7 +427,6 @@ router.post('/sync-notes', authMiddleware, async (request: AuthRequest, response
       response.status(200).json({ success: true, count: 0 });
     }
   } catch (error) {
-    console.error('Помилка синхронізації нотаток:', error);
     response.status(500).json({ error: 'Помилка синхронізації нотаток' });
   }
 });

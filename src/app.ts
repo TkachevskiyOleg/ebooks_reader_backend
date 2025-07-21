@@ -9,6 +9,7 @@ import swaggerUi from 'swagger-ui-express';
 import yaml from 'yamljs';
 import dotenv from 'dotenv';
 import path from 'path';
+import { Request, Response, NextFunction } from 'express';
 
 dotenv.config();
 
@@ -29,9 +30,15 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/uploads', express.static('uploads', {
   setHeaders: (response, filePath) => {
     response.setHeader('Content-Disposition', 'attachment');
-      }
-    }
-  )
-);
+  }
+}));
+
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  res.status(500).json({
+    error: err && err.message ? err.message : err,
+    stack: err && err.stack ? err.stack : undefined,
+    stringified: (() => { try { return JSON.stringify(err); } catch { return undefined; } })()
+  });
+});
 
 export default app;

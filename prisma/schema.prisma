@@ -37,6 +37,8 @@ model Book {
   user        User?             @relation(fields: [userId], references: [id])
   userId      Int?
   progress    ReadingProgress[]
+  isPublic    Boolean           @default(false)
+  imageUrl    String?
 }
 
 model ReadingProgress {
