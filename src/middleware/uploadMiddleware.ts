@@ -2,6 +2,7 @@ import multer from 'multer';
 import path from 'path';
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import fs from 'fs';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -11,6 +12,7 @@ cloudinary.config({
 
 const storage = multer.diskStorage({
   destination: (request, file, callback) => {
+    ensureDirectoryExists('uploads/');
     callback(null, 'uploads/');
   },
   filename: (request, file, callback) => {
@@ -19,6 +21,12 @@ const storage = multer.diskStorage({
     callback(null, 'book-' + uniqueSuffix + extension);
   }
 });
+
+const ensureDirectoryExists = (dirPath: string) => {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+};
 
 const fileFilter = (request: any, file: Express.Multer.File, callback: multer.FileFilterCallback) => {
   const allowedTypes = ['.pdf', '.epub', '.fb2'];
@@ -45,8 +53,10 @@ export const uploadMultipart = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
       if (file.fieldname === 'file') {
+        ensureDirectoryExists('uploads/');
         cb(null, 'uploads/');
       } else if (file.fieldname === 'cover') {
+        ensureDirectoryExists('temp/');
         cb(null, 'temp/');
       } else {
         cb(null, '/dev/null');

@@ -33,12 +33,29 @@ class BookController {
       const isPublic = req.body.isPublic === 'true';
       let imageUrl = null;
       if (coverFile) {
-        const uploadResult = await cloudinary.uploader.upload(coverFile.path, {
-          folder: 'ebook_covers',
-          transformation: [{ width: 600, height: 800, crop: 'limit' }],
-        });
-        imageUrl = uploadResult.secure_url || uploadResult.url;
-        await fs.unlink(coverFile.path).catch(() => {});
+        try {
+          const fileExists = await fs.access(coverFile.path).then(() => true).catch(() => false);
+          if (!fileExists) {
+            console.error('Файл обкладинки не існує:', coverFile.path);
+          } else {
+            console.log('Завантажую обкладинку:', coverFile.path);
+            const uploadResult = await cloudinary.uploader.upload(coverFile.path, {
+              folder: 'ebook_covers',
+              transformation: [{ width: 600, height: 800, crop: 'limit' }],
+            });
+            imageUrl = uploadResult.secure_url || uploadResult.url;
+            console.log('Обкладинка успішно завантажена:', imageUrl);
+          }
+        } catch (uploadError) {
+          console.error('Помилка завантаження обкладинки:', uploadError);
+        } finally {
+          try {
+            await fs.unlink(coverFile.path);
+            console.log('Тимчасовий файл обкладинки видалено');
+          } catch (deleteError) {
+            console.error('Помилка видалення тимчасового файлу:', deleteError);
+          }
+        }
       }
       const book = await prisma.book.create({
         data: {
@@ -57,7 +74,11 @@ class BookController {
       });
       res.status(201).json(book);
     } catch (error) {
-      res.status(500).json({ error: 'Помилка при завантаженні книги' });
+      console.error('Помилка при завантаженні книги:', error);
+      res.status(500).json({ 
+        error: 'Помилка при завантаженні книги',
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   }
 
