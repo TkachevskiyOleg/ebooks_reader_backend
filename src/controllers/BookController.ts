@@ -27,7 +27,7 @@ class BookController {
       const filePath = bookFile.path;
       const fileName = bookFile.filename;
       const userId = req.user?.userId;
-      const { title, author, format, publisher, language } =
+      const { title, author, format, publisher, language, genre} =
         await extractMetadata(filePath, bookFile.originalname);
       const storagePath = await copyFileToStorage(filePath, fileName);
       const isPublic = req.body.isPublic === 'true';
@@ -64,6 +64,7 @@ class BookController {
           format,
           publisher,
           language,
+          genre,
           filePath: `/uploads/${fileName}`,
           storagePath: storagePath,
           originalFilePath: filePath, 
@@ -289,6 +290,49 @@ static async downloadBook(req: AuthRequest, response: Response) {
       res.status(500).json({ error: 'Помилка при завантаженні обкладинки' });
     }
   }
+
+  static async getBooksByGenre(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { genre } = req.query;
+    if (!genre || typeof genre !== 'string') {
+      res.status(400).json({ error: 'Жанр не вказано або вказано невірно' });
+      return;
+    }
+
+    const books = await prisma.book.findMany({
+      where: { 
+        genre: genre,
+        isPublic: true 
+      },
+      select: {
+        id: true,
+        title: true,
+        author: true,
+        genre: true,
+        format: true,
+        imageUrl: true
+      }
+    });
+
+    res.json(books);
+  } catch (error) {
+    res.status(500).json({ error: 'Помилка при отриманні книг за жанром' });
+  }
+}
+
+static async getAllGenres(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const genres = await prisma.book.findMany({
+      where: { isPublic: true },
+      distinct: ['genre'],
+      select: { genre: true }
+    });
+    const genreList = genres.map(book => book.genre).filter(Boolean);
+    res.json(genreList);
+  } catch (error) {
+    res.status(500).json({ error: 'Помилка при отриманні списку жанрів' });
+  }
+}
 }
 
 export default BookController;

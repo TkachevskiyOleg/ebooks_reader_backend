@@ -26,7 +26,8 @@ model Book {
   format      String
   publisher   String?
   language    String?
-  storagePath String?            @unique 
+  genre       String?           
+  storagePath String?           @unique 
   filePath    String            @unique
   originalFilePath String?     
   createdAt   DateTime          @default(now())

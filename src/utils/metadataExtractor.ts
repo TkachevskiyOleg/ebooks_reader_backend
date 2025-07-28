@@ -25,7 +25,8 @@ export async function extractMetadata(filePath: string, originalName: string) {
       author: metadata.authors?.join(', ') || null,
       format,
       publisher: metadata.publisher || null,
-      language: metadata.languages?.[0] || null
+      language: metadata.languages?.[0] || null,
+      genre: metadata.tags?.[0] || null 
     };
   } catch (error) {
     return {
@@ -33,7 +34,8 @@ export async function extractMetadata(filePath: string, originalName: string) {
       author: null,
       format,
       publisher: null,
-      language: null
+      language: null,
+      genre: null 
     };
   }
 }
