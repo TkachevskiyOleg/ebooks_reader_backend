@@ -362,80 +362,118 @@ static async rateBook(req: AuthRequest, res: Response) {
   }
 }
 
-  static async filterBooks(req: AuthRequest, res: Response) {
+static async filterBooks(req: AuthRequest, res: Response) {
   try {
     const {
-      tags,          // Фільтр за тегами (через кому: "Детектив,Фантастика")
-      minRating,     // Мінімальний рейтинг (число від 0 до 5)
-      afterDate,     // Книги, додані після дати (ISO-рядок, наприклад "2024-01-01")
-      language,      // Мова книги ("Українська", "Англійська" тощо)
-      format,        // Формат (pdf epub)
-      page = 1,      // Пагінація
-      limit = 20     // Кількість книг на сторінку
+      tags,
+      minRating,
+      afterDate,
+      language,
+      format,
+      searchQuery,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      page = '1',
+      limit = '20'
     } = req.query;
 
+    const orderBy: Prisma.BookOrderByWithRelationInput = {};
+    const allowedSortFields: (keyof Prisma.BookOrderByWithRelationInput)[] = [
+      'title', 'author', 'avgRating', 'createdAt'
+    ];
+    
+    if (allowedSortFields.includes(sortBy as keyof Prisma.BookOrderByWithRelationInput)) {
+      orderBy[sortBy as keyof Prisma.BookOrderByWithRelationInput] = sortOrder === 'asc' ? 'asc' : 'desc';
+    } else {
+      orderBy.createdAt = 'desc';
+    }
+
+    const filterConditions: Prisma.BookWhereInput[] = [];
+    
+    if (tags) {
+      filterConditions.push({
+        tags: {
+          some: {
+            name: {
+              in: typeof tags === 'string' ? tags.split(',') : []
+            }
+          }
+        }
+      });
+    }
+
+    if (minRating) {
+      filterConditions.push({
+        avgRating: {
+          gte: Number(minRating)
+        }
+      });
+    }
+
+    if (afterDate) {
+      filterConditions.push({
+        createdAt: {
+          gte: new Date(afterDate as string)
+        }
+      });
+    }
+
+    if (language) {
+      filterConditions.push({
+        language: language as string
+      });
+    }
+
+    if (format) {
+      filterConditions.push({
+        format: format as string
+      });
+    }
+
+    if (searchQuery) {
+      filterConditions.push({
+        OR: [
+          { title: { contains: searchQuery as string, mode: 'insensitive' as const } },
+          { author: { contains: searchQuery as string, mode: 'insensitive' as const } }
+        ]
+      });
+    }
+
     const where: Prisma.BookWhereInput = {
-      isPublic: true,  
-      AND: [
-        tags ? { 
-          tags: { 
-            some: { 
-              name: { 
-                in: (tags as string).split(',') 
-              } 
-            } 
-          } 
-        } : {},
-        minRating ? { 
-          avgRating: { 
-            gte: Number(minRating) 
-          } 
-        } : {},
-        afterDate ? { 
-          createdAt: { 
-            gte: new Date(afterDate as string) 
-          } 
-        } : {},
-        language ? { 
-          language: language as string 
-        } : {},
-        format ? { 
-          format: format as string 
-        } : {}
-      ]
+      isPublic: true,
+      AND: filterConditions
     };
 
     const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit);
 
     const [books, totalCount] = await Promise.all([
       prisma.book.findMany({
         where,
+        orderBy,
         skip,
-        take: Number(limit),
+        take,
         include: {
-          tags: true,  
+          tags: true,
         },
-        orderBy: {
-          createdAt: 'desc'  
-        }
       }),
-      prisma.book.count({ where })
+      prisma.book.count({ where }),
     ]);
 
     res.json({
       total: totalCount,
       page: Number(page),
-      limit: Number(limit),
-      books
+      limit: take,
+      books,
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Помилка при фільтрації книг',
-      details: error instanceof Error ? error.message : String(error)
-    });
+      details: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
+}
 
-}
-}
 
 export default BookController;
