@@ -24,7 +24,7 @@ class AuthController {
 
   static async register(req: Request, res: Response) {
     try {
-      const { login, password } = req.body;
+      const { login, password, role = 'USER' } = req.body; 
       if (!login || !password) {
         return res.status(400).json({ error: 'Логін і пароль обовʼязкові' });
       }
@@ -39,12 +39,21 @@ class AuthController {
       const hashedPassword = await bcrypt.hash(password, 10);
       const refreshToken = AuthController.generateRefreshToken();
       const user = await prisma.user.create({
-        data: { login, password: hashedPassword, refreshToken }
+        data: { 
+          login, 
+          password: hashedPassword, 
+          refreshToken,
+          role      
+        }
       });
-      const token = jwt.sign({ userId: user.id, login: user.login }, JWT_SECRET, { expiresIn: '7d' });
+      const token = jwt.sign({ 
+        userId: user.id, 
+        login: user.login,
+        role: user.role  
+      }, JWT_SECRET, { expiresIn: '7d' });
       res.status(201).json({
         message: 'Користувача створено',
-        user: { id: user.id, login: user.login },
+        user: { id: user.id, login: user.login, role: user.role },  
         token,
         refreshToken
       });
@@ -73,7 +82,11 @@ class AuthController {
       }
       const refreshToken = AuthController.generateRefreshToken();
       await prisma.user.update({ where: { id: user.id }, data: { refreshToken } });
-      const token = jwt.sign({ userId: user.id, login: user.login }, JWT_SECRET, { expiresIn: '7d' });
+      const token = jwt.sign({ 
+        userId: user.id, 
+        login: user.login,
+        role: user.role  
+      }, JWT_SECRET, { expiresIn: '7d' });
       res.json({ token, refreshToken });
     } catch (error) {
       res.status(500).json({ error: 'Помилка при вході' });
@@ -90,7 +103,11 @@ class AuthController {
       if (!user) {
         return res.status(401).json({ error: 'Невірний refresh token' });
       }
-      const token = jwt.sign({ userId: user.id, login: user.login }, JWT_SECRET, { expiresIn: '7d' });
+      const token = jwt.sign({ 
+        userId: user.id, 
+        login: user.login,
+        role: user.role  
+      }, JWT_SECRET, { expiresIn: '7d' });
       res.json({ token });
     } catch (error) {
       res.status(500).json({ error: 'Помилка оновлення токена' });
@@ -99,14 +116,17 @@ class AuthController {
 
   static async me(req: Request, res: Response) {
     try {
-
       const userReq = req as any;
       if (!userReq.user) {
         return res.status(401).json({ error: 'Неавторизовано' });
       }
       const user = await prisma.user.findUnique({
         where: { id: userReq.user.userId },
-        select: { id: true, login: true }
+        select: { 
+          id: true, 
+          login: true,
+          role: true  
+        }
       });
       if (!user) {
         return res.status(404).json({ error: 'Користувача не знайдено' });
@@ -118,4 +138,4 @@ class AuthController {
   }
 }
 
-export default AuthController; 
+export default AuthController;

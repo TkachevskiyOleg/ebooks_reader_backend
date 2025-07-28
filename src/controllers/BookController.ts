@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
+import { Prisma } from '@prisma/client';
 import fs from 'fs/promises';
 import path from 'path';
 import { extractMetadata } from '../utils/metadataExtractor';
@@ -332,6 +333,108 @@ static async getAllGenres(req: AuthRequest, res: Response): Promise<void> {
   } catch (error) {
     res.status(500).json({ error: 'Помилка при отриманні списку жанрів' });
   }
+ }
+static async rateBook(req: AuthRequest, res: Response) {
+  const { bookId } = req.params;
+  const { value } = req.body;
+  const userId = req.user!.userId;
+
+  try {
+    const rating = await prisma.rating.upsert({
+      where: { bookId_userId: { bookId: parseInt(bookId), userId } },
+      update: { value },
+      create: { bookId: parseInt(bookId), userId, value },
+    });
+
+    const avgResult = await prisma.rating.aggregate({
+      where: { bookId: parseInt(bookId) },
+      _avg: { value: true },
+    });
+
+    await prisma.book.update({
+      where: { id: parseInt(bookId) },
+      data: { avgRating: avgResult._avg.value },
+    });
+
+    res.json(rating);
+  } catch (error) {
+    res.status(500).json({ error: 'Помилка при оцінюванні книги' });
+  }
+}
+
+  static async filterBooks(req: AuthRequest, res: Response) {
+  try {
+    const {
+      tags,          // Фільтр за тегами (через кому: "Детектив,Фантастика")
+      minRating,     // Мінімальний рейтинг (число від 0 до 5)
+      afterDate,     // Книги, додані після дати (ISO-рядок, наприклад "2024-01-01")
+      language,      // Мова книги ("Українська", "Англійська" тощо)
+      format,        // Формат (pdf epub)
+      page = 1,      // Пагінація
+      limit = 20     // Кількість книг на сторінку
+    } = req.query;
+
+    const where: Prisma.BookWhereInput = {
+      isPublic: true,  
+      AND: [
+        tags ? { 
+          tags: { 
+            some: { 
+              name: { 
+                in: (tags as string).split(',') 
+              } 
+            } 
+          } 
+        } : {},
+        minRating ? { 
+          avgRating: { 
+            gte: Number(minRating) 
+          } 
+        } : {},
+        afterDate ? { 
+          createdAt: { 
+            gte: new Date(afterDate as string) 
+          } 
+        } : {},
+        language ? { 
+          language: language as string 
+        } : {},
+        format ? { 
+          format: format as string 
+        } : {}
+      ]
+    };
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [books, totalCount] = await Promise.all([
+      prisma.book.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          tags: true,  
+        },
+        orderBy: {
+          createdAt: 'desc'  
+        }
+      }),
+      prisma.book.count({ where })
+    ]);
+
+    res.json({
+      total: totalCount,
+      page: Number(page),
+      limit: Number(limit),
+      books
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Помилка при фільтрації книг',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+
 }
 }
 

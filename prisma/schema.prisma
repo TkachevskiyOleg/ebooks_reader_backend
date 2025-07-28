@@ -8,80 +8,128 @@ generator client {
 }
 
 model User {
-  id          Int              @id @default(autoincrement())
-  login       String           @unique
-  password    String
+  id           Int           @id @default(autoincrement())
+  login        String        @unique
+  password     String
   refreshToken String?
-  books       Book[]
-  collections Collection[]
-  progress    ReadingProgress[]
-  bookmarks   Bookmark[]
-  notes       Note[]
+  role         String        @default("USER") 
+  books        Book[]
+  collections  Collection[]
+  progress     ReadingProgress[]
+  bookmarks    Bookmark[]
+  notes        Note[]
+  ratings      Rating[]
+  viewHistory  ViewHistory[]
 }
 
 model Book {
-  id          Int               @id @default(autoincrement())
-  title       String
-  author      String?
-  format      String
-  publisher   String?
-  language    String?
-  genre       String?           
-  storagePath String?           @unique 
-  filePath    String            @unique
-  originalFilePath String?     
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  collections Collection[]
-  bookmarks   Bookmark[]
-  notes       Note[]
-  user        User?             @relation(fields: [userId], references: [id])
-  userId      Int?
-  progress    ReadingProgress[]
-  isPublic    Boolean           @default(false)
-  imageUrl    String?
+  id               Int             @id @default(autoincrement())
+  title            String
+  author           String?
+  format           String
+  publisher        String?
+  language         String?
+  storagePath      String?         @unique
+  filePath         String          @unique
+  originalFilePath String?
+  genre            String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  isPublic         Boolean         @default(false)
+  imageUrl         String?
+  avgRating        Float?          @default(0.0)
+  
+  // Relations
+  tags             Tag[]           @relation("BookToTags")
+  collections      Collection[]
+  bookmarks        Bookmark[]
+  notes            Note[]
+  progress         ReadingProgress[]
+  ratings          Rating[]
+  viewHistory      ViewHistory[]
+  user             User?           @relation(fields: [userId], references: [id])
+  userId           Int?
+}
+
+model Tag {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  books Book[]  @relation("BookToTags")
 }
 
 model ReadingProgress {
   id        Int      @id @default(autoincrement())
+  progress  Float
+  position  String
+  updatedAt DateTime @default(now())
+  
+  // Relations
   book      Book     @relation(fields: [bookId], references: [id])
   bookId    Int
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
-  progress  Float
-  position  String
-  updatedAt DateTime @default(now())
 
   @@unique([bookId, userId])
 }
 
 model Bookmark {
   id        Int      @id @default(autoincrement())
+  position  String
+  note      String?
+  createdAt DateTime @default(now())
+  
+  // Relations
   book      Book     @relation(fields: [bookId], references: [id])
   bookId    Int
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
-  position  String
-  note      String?
-  createdAt DateTime @default(now())
 }
 
 model Note {
   id        Int      @id @default(autoincrement())
+  content   String
+  position  String
+  createdAt DateTime @default(now())
+  
+  // Relations
   book      Book     @relation(fields: [bookId], references: [id])
   bookId    Int
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
-  content   String
-  position  String
-  createdAt DateTime @default(now())
 }
 
 model Collection {
   id        Int      @id @default(autoincrement())
   name      String
+  createdAt DateTime @default(now())
+  
+  // Relations
   books     Book[]
   user      User?    @relation(fields: [userId], references: [id])
   userId    Int?
+}
+
+model Rating {
+  id        Int      @id @default(autoincrement())
+  value     Float    @default(0.0)
   createdAt DateTime @default(now())
+  
+  // Relations
+  book      Book     @relation(fields: [bookId], references: [id])
+  bookId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+
+  @@unique([bookId, userId])
+}
+
+model ViewHistory {
+  id        Int      @id @default(autoincrement())
+  viewedAt  DateTime @default(now())
+  
+  // Relations
+  book      Book     @relation(fields: [bookId], references: [id])
+  bookId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
 }

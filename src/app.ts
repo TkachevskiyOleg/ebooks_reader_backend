@@ -6,6 +6,7 @@ import collectionRoutes from './routes/collectionRoutes';
 import mobileRoutes from './routes/mobileRoutes';
 import authRoutes from './routes/authRoutes';
 import swaggerUi from 'swagger-ui-express';
+import tagRoutes from './routes/tagRoutes';
 import yaml from 'yamljs';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -23,6 +24,7 @@ app.use('/api/books', bookRoutes);
 app.use('/api/collections', collectionRoutes);
 app.use('/api/mobile', mobileRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/tags', tagRoutes);
 
 const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yaml'));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));

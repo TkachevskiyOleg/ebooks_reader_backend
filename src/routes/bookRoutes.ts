@@ -19,5 +19,7 @@ router.post('/add-to-my', authMiddleware, BookController.addToMyBooks);
 router.patch('/:id/cover', authMiddleware, uploadCover.single('cover'), BookController.uploadCover);
 router.get('/genres', authMiddleware, BookController.getAllGenres);
 router.get('/genre/:genre', authMiddleware, BookController.getBooksByGenre);
+router.post('/:bookId/rate', authMiddleware, BookController.rateBook);
+router.get('/filter', BookController.filterBooks);  
 
 export default router;

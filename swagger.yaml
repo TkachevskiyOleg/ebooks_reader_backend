@@ -1057,3 +1057,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error' 
+    paths:
+  /books/filter:
+    get:
+      summary: Фільтрація книг
+      parameters:
+        - name: tags
+          in: query
+          schema:
+            type: string
+          description: Теги через кому ("Детектив,Фантастика")
+        - name: minRating
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 5
+        - name: afterDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+    responses:
+      200:
+        description: Список відфільтрованих книг
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                total:
+                  type: integer
+                page:
+                  type: integer
+                limit:
+                  type: integer
+                books:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Book'
