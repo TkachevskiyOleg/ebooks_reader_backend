@@ -76,14 +76,13 @@ class AuthController {
         }
       });
       try {
-        const verifyLink = `${API_BASE_URL}/auth/verify-email?token=${user.emailVerificationToken}`;
+        const verifyLink = `${API_BASE_URL}/api/auth/verify-email?token=${user.emailVerificationToken}`;
         await sendEmail(
           user.email!,
           'Підтвердження пошти',
           `<p>Підтвердіть свою пошту, натиснувши посилання:</p><p><a href="${verifyLink}">${verifyLink}</a></p>`
         );
       } catch (e) {
-        // If email fails, we still created the user; allow client to retry sending
       }
       const token = jwt.sign({ 
         userId: user.id, 
@@ -193,7 +192,7 @@ class AuthController {
         where: { id: user.id },
         data: { emailVerificationToken: token, emailVerificationExpires: new Date(Date.now() + 1000 * 60 * 60 * 24) }
       });
-      const verifyLink = `${API_BASE_URL}/auth/verify-email?token=${token}`;
+      const verifyLink = `${API_BASE_URL}/api/auth/verify-email?token=${token}`;
       await sendEmail(email, 'Підтвердження пошти', `<p>Підтвердіть пошту: <a href="${verifyLink}">${verifyLink}</a></p>`);
       return res.json({ message: 'Лист відправлено' });
     } catch (error) {
@@ -220,7 +219,7 @@ class AuthController {
           passwordResetCodeExpires: new Date(Date.now() + 1000 * 60 * 10)
         }
       });
-      const resetLink = `${API_BASE_URL}/auth/reset-password?token=${token}`;
+      const resetLink = `${API_BASE_URL}/api/auth/reset-password?token=${token}`;
       await sendEmail(
         email,
         'Скидання пароля',
