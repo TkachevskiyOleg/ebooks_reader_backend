@@ -1,9 +1,9 @@
 openapi: 3.0.0
 info:
   title: Ebooks Reader Backend API
-  version: 1.0.1
+  version: 1.0.3
   description: |
-    Оновлена документація REST API для мобільного рідера книг. 
+    Оновлена документація REST API для мобільного рідера книг.
     - Додано multipart upload для книги та обкладинки (cover)
     - Додано підтримку Cloudinary для covers
     - Додано публічну бібліотеку книг (marketplace)
@@ -23,7 +23,12 @@ components:
       properties:
         id:
           type: integer
+        email:
+          type: string
+          format: email
         login:
+          type: string
+        role:
           type: string
     Book:
       type: object
@@ -123,7 +128,11 @@ paths:
           application/json:
             schema:
               type: object
+              required: [email, login, password]
               properties:
+                email:
+                  type: string
+                  format: email
                 login:
                   type: string
                 password:
@@ -134,16 +143,21 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+                  refreshToken:
+                    type: string
         400:
           description: Помилка валідації
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
   /api/auth/login:
     post:
-      summary: Логін користувача
+      summary: Вхід користувача
       tags: [Auth]
       requestBody:
         required: true
@@ -151,14 +165,16 @@ paths:
           application/json:
             schema:
               type: object
+              required: [email, password]
               properties:
-                login:
+                email:
                   type: string
+                  format: email
                 password:
                   type: string
       responses:
         200:
-          description: Успішний логін
+          description: Успішний вхід
           content:
             application/json:
               schema:
@@ -168,12 +184,10 @@ paths:
                     type: string
                   refreshToken:
                     type: string
+        403:
+          description: Пошта не підтверджена
         401:
-          description: Невірний логін або пароль
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          description: Невірна пошта або пароль
   /api/auth/refresh:
     post:
       summary: Оновлення access token
@@ -190,19 +204,6 @@ paths:
       responses:
         200:
           description: Новий access token
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  token:
-                    type: string
-        401:
-          description: Невірний refresh token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
   /api/auth/me:
     get:
       summary: Профіль користувача
@@ -218,10 +219,82 @@ paths:
                 $ref: '#/components/schemas/User'
         401:
           description: Неавторизовано
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+  /api/auth/verify-email:
+    get:
+      summary: Підтвердження пошти
+      tags: [Auth]
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Пошту підтверджено
+  /api/auth/resend-verification:
+    post:
+      summary: Повторне надсилання листа верифікації
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        200:
+          description: Лист відправлено
+  /api/auth/forgot-password:
+    post:
+      summary: Запит на відновлення пароля (код + посилання)
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        200:
+          description: Якщо користувач існує, лист відправлено
+  /api/auth/reset-password:
+    post:
+      summary: Скидання пароля за токеном або кодом
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              oneOf:
+                - required: [token, newPassword]
+                - required: [email, code, newPassword]
+              properties:
+                token:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                code:
+                  type: string
+                  description: 4-значний код
+                newPassword:
+                  type: string
+      responses:
+        200:
+          description: Пароль оновлено
   /api/collections:
     get:
       summary: Отримання всіх колекцій користувача

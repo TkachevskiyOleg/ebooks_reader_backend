@@ -9,10 +9,18 @@ generator client {
 
 model User {
   id           Int           @id @default(autoincrement())
+  email        String?       @unique @db.Citext
   login        String        @unique
   password     String
   refreshToken String?
   role         String        @default("USER") 
+  isEmailVerified Boolean    @default(false)
+  emailVerificationToken String?
+  emailVerificationExpires DateTime?
+  passwordResetToken String?
+  passwordResetExpires DateTime?
+  passwordResetCode String?
+  passwordResetCodeExpires DateTime?
   books        Book[]
   collections  Collection[]
   progress     ReadingProgress[]
