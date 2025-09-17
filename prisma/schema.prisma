@@ -47,7 +47,6 @@ model Book {
   imageUrl         String?
   avgRating        Float?          @default(0.0)
   
-  // Relations
   tags             Tag[]           @relation("BookToTags")
   collections      Collection[]
   bookmarks        Bookmark[]
@@ -71,7 +70,6 @@ model ReadingProgress {
   position  String
   updatedAt DateTime @default(now())
   
-  // Relations
   book      Book     @relation(fields: [bookId], references: [id])
   bookId    Int
   user      User     @relation(fields: [userId], references: [id])
@@ -86,7 +84,6 @@ model Bookmark {
   note      String?
   createdAt DateTime @default(now())
   
-  // Relations
   book      Book     @relation(fields: [bookId], references: [id])
   bookId    Int
   user      User     @relation(fields: [userId], references: [id])
@@ -99,7 +96,6 @@ model Note {
   position  String
   createdAt DateTime @default(now())
   
-  // Relations
   book      Book     @relation(fields: [bookId], references: [id])
   bookId    Int
   user      User     @relation(fields: [userId], references: [id])
@@ -111,7 +107,6 @@ model Collection {
   name      String
   createdAt DateTime @default(now())
   
-  // Relations
   books     Book[]
   user      User?    @relation(fields: [userId], references: [id])
   userId    Int?
@@ -122,7 +117,6 @@ model Rating {
   value     Float    @default(0.0)
   createdAt DateTime @default(now())
   
-  // Relations
   book      Book     @relation(fields: [bookId], references: [id])
   bookId    Int
   user      User     @relation(fields: [userId], references: [id])
@@ -135,7 +129,6 @@ model ViewHistory {
   id        Int      @id @default(autoincrement())
   viewedAt  DateTime @default(now())
   
-  // Relations
   book      Book     @relation(fields: [bookId], references: [id])
   bookId    Int
   user      User     @relation(fields: [userId], references: [id])
