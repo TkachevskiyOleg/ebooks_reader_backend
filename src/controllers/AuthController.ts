@@ -206,7 +206,6 @@ class AuthController {
       if (!rawEmail) return res.status(400).json({ error: 'Пошта обовʼязкова' });
       const email = String(rawEmail).trim().toLowerCase();
       const user = await prisma.user.findUnique({ where: { email } });
-      // Do not reveal whether user exists
       if (!user) return res.json({ message: 'Якщо користувач існує, лист відправлено' });
       const token = AuthController.generateShortToken(20);
       const code = AuthController.generateFourDigitCode();
