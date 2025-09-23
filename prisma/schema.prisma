@@ -47,6 +47,16 @@ model Book {
   imageUrl         String?
   avgRating        Float?          @default(0.0)
   
+  // Поля для інтеграції з зовнішніми API
+  externalId       String?         @unique
+  externalSource   String?         // 'google_books', 'open_library', 'gutenberg'
+  externalUrl      String?
+  isbn             String?
+  description      String?         @db.Text
+  pageCount        Int?
+  publishedDate    String?
+  lastSyncedAt     DateTime?
+  
   tags             Tag[]           @relation("BookToTags")
   collections      Collection[]
   bookmarks        Bookmark[]
@@ -133,4 +143,16 @@ model ViewHistory {
   bookId    Int
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
+}
+
+model SyncLog {
+  id          Int      @id @default(autoincrement())
+  source      String   // 'google_books', 'open_library', 'gutenberg'
+  status      String   // 'success', 'error', 'partial'
+  booksAdded  Int      @default(0)
+  booksUpdated Int     @default(0)
+  errors      String?  @db.Text
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  duration    Int?     // в мілісекундах
 }
