@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middleware/authMiddleware';
 import prisma from '../prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -294,6 +295,24 @@ class AuthController {
       res.json(user);
     } catch (error) {
       res.status(500).json({ error: 'Помилка отримання профілю' });
+    }
+  }
+
+  static async updateUserRole(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user || req.user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Доступ заборонено' });
+      }
+      const { userId, role } = req.body as { userId?: number; role?: string };
+      if (!userId || !role || !['ADMIN', 'USER'].includes(role)) {
+        return res.status(400).json({ error: 'Потрібні userId та role (ADMIN або USER)' });
+      }
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) return res.status(404).json({ error: 'Користувача не знайдено' });
+      const updated = await prisma.user.update({ where: { id: userId }, data: { role } });
+      return res.json({ id: updated.id, email: updated.email, login: updated.login, role: updated.role });
+    } catch (error) {
+      return res.status(500).json({ error: 'Помилка оновлення ролі' });
     }
   }
 }

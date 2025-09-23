@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.11.0",
+    "@types/node-cron": "^3.0.11",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
     "calibre": "^6.1.0",
@@ -25,12 +26,14 @@
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
     "multer-storage-cloudinary": "^4.0.0",
+    "node-cron": "^3.0.3",
     "nodemailer": "^7.0.6",
     "office-text-extractor": "^1.0.4",
     "pdf-parse": "^1.1.1",
     "prisma": "^6.11.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "xml2js": "^0.6.2",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
@@ -44,6 +47,7 @@
     "@types/pdf-parse": "^1.1.3",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "@types/xml2js": "^0.4.14",
     "@types/yamljs": "^0.2.34",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.3"

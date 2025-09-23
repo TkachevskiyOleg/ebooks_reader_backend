@@ -31,7 +31,7 @@ cd ebooks_reader_backend
 npm install
 ```
 
-- Створи файл `.env` (див. приклад у `.env.example`)
+- Створи файл `.env` (див. приклад нижче або у `.env.example`)
 - Запусти міграції: `npx prisma migrate dev`
 - Запусти сервер: `npm run dev`
 
@@ -45,6 +45,7 @@ npm install
 - CRUD для книг, колекцій, тегів, закладок, нотаток, рейтингів
 - Синхронізація прогресу читання, закладок, нотаток з мобільним додатком
 - Публічна бібліотека книг (маркетплейс)
+- Домашня стрічка з останніми та топовими публічними книгами
 - Документований API (Swagger)
 
 ---
@@ -69,6 +70,7 @@ npm install
 - `GET /api/books/file/:id` — завантажити файл книги
 - `POST /api/books/:bookId/rate` — оцінити книгу
 - `GET /api/books/filter` — фільтрація книг
+- `GET /api/books/home` — домашня стрічка (latest, topRated)
 
 ### 📂 Колекції
 - `POST /api/collections/` — створити колекцію
@@ -97,6 +99,16 @@ npm install
 - `POST /api/mobile/sync-notes` — синхронізувати нотатки
 
 ---
+
+## 🔁 Синхронізація книг з зовнішніх сервісів
+
+- Автоматично за CRON: вистав `SYNC_ENABLED=true`, графік у `SYNC_CRON` (за замовчуванням щогодини).
+- Джерела:
+  - Project Gutenberg (Gutendex) — підтягує публічні книги, теги, обкладинки (через Open Library, якщо бракує).
+  - OPDS-фіди — налаштуй `OPDS_FEEDS` через кому.
+- Ручний запуск (тільки ADMIN): `POST /api/books/sync?pages=1&max=8`
+  - Параметри (опц.): `pages` — сторінки Gutendex; `max` — максимум книг за прогін.
+
 
 ### 🔒 Безпека
 - Всі маршрути (крім /auth/register, /auth/login, /auth/refresh, /auth/verify-email, /auth/forgot-password, /auth/reset-password) потребують JWT токен у заголовку:
@@ -130,3 +142,58 @@ Authorization: Bearer <ваш_токен>
 ## 👤 Автор
 - Ткачевський Олег
 - Для питань: [email/telegram/...]
+
+---
+
+## 🧩 Приклад .env
+
+```
+# Server
+PORT=3000
+JWT_SECRET=change_me
+
+# API base URLs (used in emails and links)
+APP_BASE_URL=http://localhost:3000
+API_BASE_URL=http://localhost:3000
+
+# Postgres (Prisma читає з DATABASE_URL)
+DATABASE_URL=postgresql://user:password@localhost:5432/ebooks?schema=public
+
+# Storage
+# Optional: override default book-storage path
+# STORAGE_DIR=E:/data/book-storage
+
+# SMTP (optional)
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+MAIL_FROM=
+
+# Cloudinary (optional for cover uploads)
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+
+# Sync toggles & schedule
+SYNC_ENABLED=true
+SYNC_CRON=0 * * * *
+
+# Sync sources
+# Comma-separated OPDS feeds (optional)
+# OPDS_FEEDS=https://standardebooks.org/opds/all,https://www.feedbooks.com/publicdomain/catalog.opds
+
+# Open Library cover enrichment
+OPENLIBRARY_ENRICH=true
+
+# Sync safety limits
+SYNC_MAX_FILE_MB=50
+# 0 = unlimited
+SYNC_STORAGE_QUOTA_MB=0
+
+# Gutendex pages per run
+SYNC_GUTENDEX_PAGES=1
+
+# Max items across sources per run
+SYNC_MAX_ITEMS_PER_RUN=64
+```

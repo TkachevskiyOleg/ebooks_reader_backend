@@ -20,5 +20,6 @@ router.post('/resend-verification', AuthController.resendVerification);
 router.post('/forgot-password', AuthController.forgotPassword);
 router.post('/reset-password', AuthController.resetPassword);
 router.get('/me', authMiddleware, AuthController.me);
+router.post('/admin/update-role', authMiddleware, AuthController.updateUserRole);
 
 export default router; 

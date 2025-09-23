@@ -473,6 +473,30 @@ static async filterBooks(req: AuthRequest, res: Response) {
       });
     }
   }
+
+  static async getHomeFeed(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user?.userId) {
+        res.status(401).json({ error: 'Неавторизовано' });
+        return;
+      }
+      const latest = await prisma.book.findMany({
+        where: { isPublic: true },
+        orderBy: { createdAt: 'desc' },
+        take: 12,
+        select: { id: true, title: true, author: true, imageUrl: true, format: true, createdAt: true }
+      });
+      const topRated = await prisma.book.findMany({
+        where: { isPublic: true, avgRating: { not: null } },
+        orderBy: { avgRating: 'desc' },
+        take: 12,
+        select: { id: true, title: true, author: true, imageUrl: true, format: true, avgRating: true }
+      });
+      res.json({ latest, topRated });
+    } catch (error) {
+      res.status(500).json({ error: 'Помилка отримання домашнього фіду' });
+    }
+  }
 }
 
 
