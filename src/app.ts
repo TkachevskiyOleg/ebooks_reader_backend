@@ -7,10 +7,13 @@ import mobileRoutes from './routes/mobileRoutes';
 import authRoutes from './routes/authRoutes';
 import swaggerUi from 'swagger-ui-express';
 import tagRoutes from './routes/tagRoutes';
+import externalBooksRoutes from './routes/externalBooks';
+import adminRoutes from './routes/admin';
 import yaml from 'yamljs';
 import dotenv from 'dotenv';
 import path from 'path';
 import { Request, Response, NextFunction } from 'express';
+import ScheduledSyncService from './services/scheduledSyncService';
 
 dotenv.config();
 
@@ -25,6 +28,8 @@ app.use('/api/collections', collectionRoutes);
 app.use('/api/mobile', mobileRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/tags', tagRoutes);
+app.use('/api/external-books', externalBooksRoutes);
+app.use('/api/admin', adminRoutes);
 
 const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yaml'));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
@@ -42,5 +47,22 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     stringified: (() => { try { return JSON.stringify(err); } catch { return undefined; } })()
   });
 });
+
+// Initialize external book integration on startup
+const initializeBookIntegration = async () => {
+  try {
+    console.log('Initializing book integration services...');
+    
+    // Start the scheduled sync service
+    ScheduledSyncService.start();
+    
+    console.log('Book integration services initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize book integration services:', error);
+  }
+};
+
+// Initialize on app startup
+initializeBookIntegration();
 
 export default app;

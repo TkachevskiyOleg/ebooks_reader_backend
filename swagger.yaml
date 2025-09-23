@@ -49,6 +49,28 @@ components:
           type: string
         storagePath:
           type: string
+        externalId:
+          type: string
+          description: ID from external source
+        externalSource:
+          type: string
+          description: Source name (google_books, open_library, etc.)
+        isbn:
+          type: string
+          description: ISBN number
+        pageCount:
+          type: integer
+          description: Number of pages
+        description:
+          type: string
+          description: Book description
+        publishedDate:
+          type: string
+          description: Publication date
+        lastSyncedAt:
+          type: string
+          format: date-time
+          description: Last metadata sync time
         originalFilePath:
           type: string
         userId:
@@ -115,6 +137,124 @@ components:
       properties:
         error:
           type: string
+    ExternalBook:
+      type: object
+      properties:
+        id:
+          type: string
+          description: External book ID
+        title:
+          type: string
+          description: Book title
+        author:
+          type: string
+          description: Book author(s)
+        description:
+          type: string
+          description: Book description
+        publisher:
+          type: string
+          description: Publisher name
+        publishedDate:
+          type: string
+          description: Publication date
+        language:
+          type: string
+          description: Book language
+        genre:
+          type: string
+          description: Book genre/category
+        isbn:
+          type: string
+          description: ISBN number
+        pageCount:
+          type: integer
+          description: Number of pages
+        imageUrl:
+          type: string
+          description: Cover image URL
+        downloadUrl:
+          type: string
+          description: Download URL for the book file
+        format:
+          type: string
+          description: File format (epub, pdf, txt, etc.)
+        source:
+          type: string
+          enum: [google_books, open_library, project_gutenberg, internet_archive]
+          description: External source name
+        canImport:
+          type: boolean
+          description: Whether the book can be imported
+    ExternalSource:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          description: Source identifier
+        displayName:
+          type: string
+          description: Human readable name
+        apiKey:
+          type: string
+          description: API key if required
+        isEnabled:
+          type: boolean
+          description: Whether the source is enabled
+        lastSyncAt:
+          type: string
+          format: date-time
+          description: Last synchronization time
+        syncCount:
+          type: integer
+          description: Total sync operations count
+        errorCount:
+          type: integer
+          description: Total error count
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    SyncLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        source:
+          type: string
+          description: Source name
+        operation:
+          type: string
+          description: Operation type (search, import, enhance, trending)
+        query:
+          type: string
+          description: Search query used
+        resultCount:
+          type: integer
+          description: Number of results found
+        successCount:
+          type: integer
+          description: Number of successful operations
+        errorCount:
+          type: integer
+          description: Number of failed operations
+        duration:
+          type: integer
+          description: Operation duration in milliseconds
+        status:
+          type: string
+          enum: [success, partial, failed]
+          description: Operation status
+        errorMessage:
+          type: string
+          description: Error details if failed
+        createdAt:
+          type: string
+          format: date-time
 security:
   - bearerAuth: []
 paths:
