@@ -7,10 +7,14 @@ import mobileRoutes from './routes/mobileRoutes';
 import authRoutes from './routes/authRoutes';
 import swaggerUi from 'swagger-ui-express';
 import tagRoutes from './routes/tagRoutes';
+import externalBooksRoutes from './routes/externalBooks';
+import schedulerRoutes from './routes/scheduler';
+import logsRoutes from './routes/logs';
 import yaml from 'yamljs';
 import dotenv from 'dotenv';
 import path from 'path';
 import { Request, Response, NextFunction } from 'express';
+import loggingMiddleware from './middleware/loggingMiddleware';
 
 dotenv.config();
 
@@ -19,12 +23,16 @@ const app = express();
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(cors());
+app.use(loggingMiddleware);
 
 app.use('/api/books', bookRoutes);
 app.use('/api/collections', collectionRoutes);
 app.use('/api/mobile', mobileRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/tags', tagRoutes);
+app.use('/api/external-books', externalBooksRoutes);
+app.use('/api/scheduler', schedulerRoutes);
+app.use('/api/logs', logsRoutes);
 
 const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yaml'));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));

@@ -46,6 +46,7 @@ model Book {
   isPublic         Boolean         @default(false)
   imageUrl         String?
   avgRating        Float?          @default(0.0)
+  externalBookId   Int?            // Link to external book source
   
   tags             Tag[]           @relation("BookToTags")
   collections      Collection[]
@@ -56,6 +57,7 @@ model Book {
   viewHistory      ViewHistory[]
   user             User?           @relation(fields: [userId], references: [id])
   userId           Int?
+  externalBook     ExternalBook?   @relation("ExternalToBook", fields: [externalBookId], references: [id])
 }
 
 model Tag {
@@ -133,4 +135,32 @@ model ViewHistory {
   bookId    Int
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
+}
+
+model ExternalBook {
+  id                Int      @id @default(autoincrement())
+  externalId        String
+  source            String   // 'google_books', 'open_library', 'gutenberg'
+  title             String
+  author            String?
+  description       String?
+  isbn              String?
+  publishedDate     String?
+  publisher         String?
+  language          String?
+  pageCount         Int?
+  categories        String[] // Array of categories/genres
+  imageUrl          String?
+  downloadUrl       String?
+  previewUrl        String?
+  isDownloadable    Boolean  @default(false)
+  isPublicDomain    Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  lastCheckedAt     DateTime @default(now())
+  
+  // Relations
+  importedBooks     Book[]   @relation("ExternalToBook")
+
+  @@unique([externalId, source])
 }
