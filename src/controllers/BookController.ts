@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import prisma from '../prisma';
 import { Prisma } from '@prisma/client';
 import fs from 'fs/promises';
@@ -181,7 +181,9 @@ static async downloadBook(req: AuthRequest, response: Response) {
           publisher: true,
           language: true,
           createdAt: true,
-          updatedAt: true
+          updatedAt: true,
+            imageUrl: true,
+            avgRating: true,
         }
       });
       res.json({ totalCount, page, limit, books });
