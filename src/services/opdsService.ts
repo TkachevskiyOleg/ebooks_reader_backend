@@ -95,7 +95,7 @@ export async function syncOpdsFeed(feedUrl: string): Promise<SyncSummary> {
     const safeTitle = String(title).replace(/[^a-z0-9\-_]+/gi, '_').slice(0, 80) || 'book';
     const filename = `opds-${Buffer.from(idStr).toString('base64').slice(0,16)}-${safeTitle}.${acquisition.format}`;
     const storagePath = path.join(STORAGE_PATH, filename);
-    const downloadPath = path.join('uploads', 'public', filename);
+    const downloadPath = path.join('uploads', filename);
     try {
       await download(acquisition.href, storagePath);
       await ensureDirectoryExists(path.dirname(downloadPath));

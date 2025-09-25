@@ -157,6 +157,73 @@ components:
 security:
   - bearerAuth: []
 paths:
+  /api/external/gutendex/search:
+    get:
+      summary: Пошук книг у Gutendex
+      tags: [External]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Результати пошуку
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        source: { type: string }
+                        externalId: { type: integer }
+                        title: { type: string }
+                        author: { type: string }
+                        imageUrl: { type: string }
+                        language: { type: string }
+                        subjects: { type: array, items: { type: string } }
+                        formats: { type: array, items: { type: string } }
+  /api/external/gutendex/books/{id}:
+    get:
+      summary: Деталі книги з Gutendex
+      tags: [External]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Деталі книги
+  /api/external/gutendex/import/{id}:
+    post:
+      summary: Імпорт однієї книги з Gutendex у нашу БД (ADMIN)
+      tags: [External]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        201:
+          description: Імпортовано
+        400:
+          description: Не вдалося імпортувати
+        403:
+          description: Доступ заборонено
   /api/auth/register:
     post:
       summary: Реєстрація користувача

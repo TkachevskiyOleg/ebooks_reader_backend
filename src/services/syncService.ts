@@ -131,8 +131,8 @@ export async function syncGutendex(pageLimit = SYNC_GUTENDEX_PAGES, maxItems = S
   let skipped = 0;
   let fetched = 0;
 
-  const publicUploadsDir = path.join('uploads', 'public');
-  await ensureDirectoryExists(publicUploadsDir);
+  const uploadsDir = path.join('uploads');
+  await ensureDirectoryExists(uploadsDir);
   await ensureDirectoryExists(STORAGE_PATH);
 
   let nextUrl: string | null = 'https://gutendex.com/books/';
@@ -165,7 +165,7 @@ export async function syncGutendex(pageLimit = SYNC_GUTENDEX_PAGES, maxItems = S
 
       const safeTitle = gb.title.replace(/[^a-z0-9\-_]+/gi, '_').slice(0, 80) || `book_${gb.id}`;
       const filename = `gutenberg-${gb.id}-${safeTitle}.${best.format}`;
-      const downloadsPath = path.join('uploads', 'public', filename);
+      const downloadsPath = path.join('uploads', filename);
       const storagePath = path.join(STORAGE_PATH, filename);
 
       try {
@@ -233,4 +233,48 @@ export async function syncAllSources(): Promise<SyncSummary[]> {
     summaries.push(...opds);
   }
   return summaries;
+}
+
+export async function importGutendexById(id: number): Promise<{ created: boolean; bookId?: number; reason?: string }> {
+  const sourceKey = `gutendex:${id}`;
+  const existing = await prisma.book.findFirst({ where: { originalFilePath: sourceKey } });
+  if (existing) return { created: false, bookId: existing.id, reason: 'exists' };
+  let data: any;
+  try {
+    const resp = await axios.get(`https://gutendex.com/books/${id}`);
+    data = resp.data as GutendexBook;
+  } catch {
+    return { created: false, reason: 'not_found' };
+  }
+  const best = pickBestFormat(data.formats);
+  if (!best) return { created: false, reason: 'no_format' };
+  const safeTitle = data.title.replace(/[^a-z0-9\-_]+/gi, '_').slice(0, 80) || `book_${id}`;
+  const filename = `gutenberg-${id}-${safeTitle}.${best.format}`;
+  const downloadsPath = path.join('uploads', filename);
+  const storagePath = path.join(STORAGE_PATH, filename);
+  try {
+    await downloadFile(best.url, storagePath);
+    await ensureDirectoryExists(path.dirname(downloadsPath));
+    fs.copyFileSync(storagePath, downloadsPath);
+  } catch {
+    return { created: false, reason: 'download_failed' };
+  }
+  const author = data.authors && data.authors.length > 0 ? data.authors.map((a: any) => a.name).join(', ') : null;
+  const imageUrl = (data.formats['image/jpeg'] as string) || null;
+  const language = data.languages && data.languages.length > 0 ? data.languages[0] : undefined;
+  const created = await prisma.book.create({
+    data: {
+      title: data.title,
+      author: author || undefined,
+      format: best.format,
+      language: language,
+      storagePath: storagePath,
+      filePath: `/${downloadsPath.replace(/\\/g, '/')}`,
+      originalFilePath: sourceKey,
+      isPublic: true,
+      imageUrl: imageUrl || undefined,
+    }
+  });
+  if (data.subjects && data.subjects.length > 0) await upsertTags(created.id, data.subjects);
+  return { created: true, bookId: created.id };
 }
