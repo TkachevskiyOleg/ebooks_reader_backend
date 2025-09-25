@@ -334,6 +334,56 @@ paths:
       responses:
         200:
           description: Пароль оновлено
+  /api/auth/verify-reset-code:
+    post:
+      summary: Перевірка коду відновлення пароля (крок 1)
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code]
+              properties:
+                email:
+                  type: string
+                  format: email
+                code:
+                  type: string
+      responses:
+        200:
+          description: Код валідний, повертається тимчасовий токен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resetAuthToken:
+                    type: string
+        400:
+          description: Невірний або прострочений код
+  /api/auth/set-new-password:
+    post:
+      summary: Встановлення нового пароля за тимчасовим токеном (крок 2)
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resetAuthToken, newPassword]
+              properties:
+                resetAuthToken:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        200:
+          description: Пароль оновлено
+        400:
+          description: Недійсний або прострочений токен
   /api/collections:
     get:
       summary: Отримання всіх колекцій користувача

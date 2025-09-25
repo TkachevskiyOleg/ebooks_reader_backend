@@ -19,6 +19,8 @@ router.get('/verify-email', AuthController.verifyEmail);
 router.post('/resend-verification', AuthController.resendVerification);
 router.post('/forgot-password', AuthController.forgotPassword);
 router.post('/reset-password', AuthController.resetPassword);
+router.post('/verify-reset-code', AuthController.verifyResetCode);
+router.post('/set-new-password', AuthController.setNewPassword);
 router.get('/me', authMiddleware, AuthController.me);
 router.post('/admin/update-role', authMiddleware, AuthController.updateUserRole);
 

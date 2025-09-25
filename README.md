@@ -59,7 +59,10 @@ npm install
 - `GET /api/auth/me` — профіль
 - `GET /api/auth/verify-email` — підтвердження email
 - `POST /api/auth/forgot-password` — запит на відновлення паролю
-- `POST /api/auth/reset-password` — скидання паролю
+- `POST /api/auth/reset-password` — скидання паролю (в один запит: код/токен + новий пароль)
+- Дворівневий варіант (за бажанням):
+  - `POST /api/auth/verify-reset-code` — перевірка коду, повертає `resetAuthToken` (діє 15 хв)
+  - `POST /api/auth/set-new-password` — встановлення нового пароля за `resetAuthToken`
 
 ### 📚 Книги
 - `POST /api/books/` — додати книгу (multipart/form-data)

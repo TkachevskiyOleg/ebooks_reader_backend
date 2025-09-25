@@ -88,13 +88,11 @@ function pickBestFormat(formats: Record<string, string | null>): { url: string; 
   for (const mime of preferredOrder) {
     const url = formats[mime];
     if (url && typeof url === 'string') {
-      // Skip zip of images or other binary collections sometimes listed
       if (url.endsWith('.zip') && mime !== 'application/epub+zip') continue;
       const ext = mime.includes('epub') ? 'epub' : mime.includes('pdf') ? 'pdf' : 'txt';
       return { url, format: ext };
     }
   }
-  // Fallback: try any HTTP(S) link
   for (const [mime, url] of Object.entries(formats)) {
     if (url && typeof url === 'string' && /^https?:\/\//.test(url)) {
       const ext =
@@ -128,8 +126,7 @@ async function upsertTags(bookId: number, subjects: string[]): Promise<void> {
 }
 
 export async function syncGutendex(pageLimit = SYNC_GUTENDEX_PAGES, maxItems = SYNC_MAX_ITEMS_PER_RUN): Promise<SyncSummary> {
-  // pageLimit controls how many pages to fetch per run (each page ~32 items)
-  // We use originalFilePath to store a stable source identifier: gutendex:<id>
+
   let created = 0;
   let skipped = 0;
   let fetched = 0;
@@ -145,14 +142,13 @@ export async function syncGutendex(pageLimit = SYNC_GUTENDEX_PAGES, maxItems = S
       const resp = await axios.get(nextUrl, { timeout: 45000 });
       data = resp.data as { results: GutendexBook[]; next: string | null };
     } catch (e) {
-      // network timeout or error – stop further paging
       break;
     }
     fetched += data.results.length;
 
     for (const gb of data.results) {
       if (created + skipped >= maxItems) {
-        nextUrl = null; // stop early
+        nextUrl = null; 
         break;
       }
       const sourceKey = `gutendex:${gb.id}`;
@@ -203,7 +199,6 @@ export async function syncGutendex(pageLimit = SYNC_GUTENDEX_PAGES, maxItems = S
         },
       });
 
-      // Optional: Enrich cover via Open Library if missing
       if (!createdBook.imageUrl && OPENLIBRARY_ENRICH) {
         try {
           const qTitle = encodeURIComponent(gb.title);
@@ -239,5 +234,3 @@ export async function syncAllSources(): Promise<SyncSummary[]> {
   }
   return summaries;
 }
-
-

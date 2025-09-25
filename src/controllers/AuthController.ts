@@ -274,6 +274,70 @@ class AuthController {
     }
   }
 
+  // Step 1: verify reset code and issue a short-lived token
+  static async verifyResetCode(req: Request, res: Response) {
+    try {
+      const { email: rawEmail, code } = req.body as { email?: string; code?: string };
+      if (!rawEmail || !code) return res.status(400).json({ error: 'Пошта і код обовʼязкові' });
+      const email = String(rawEmail).trim().toLowerCase();
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (!user || !user.passwordResetCode || user.passwordResetCode !== code) {
+        return res.status(400).json({ error: 'Невірний код' });
+      }
+      if (user.passwordResetCodeExpires && user.passwordResetCodeExpires < new Date()) {
+        return res.status(400).json({ error: 'Код прострочено' });
+      }
+      // Issue short-lived JWT strictly for reset
+      const resetAuthToken = jwt.sign({ purpose: 'password_reset', userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '15m' });
+      return res.json({ resetAuthToken });
+    } catch (error) {
+      return res.status(500).json({ error: 'Помилка перевірки коду' });
+    }
+  }
+
+  // Step 2 (alternative): set new password using resetAuthToken
+  static async setNewPassword(req: Request, res: Response) {
+    try {
+      const { resetAuthToken, newPassword } = req.body as { resetAuthToken?: string; newPassword?: string };
+      if (!resetAuthToken || !newPassword) {
+        return res.status(400).json({ error: 'resetAuthToken і новий пароль обовʼязкові' });
+      }
+      const passwordRegex = /^[a-zA-Z0-9]{6,}$/;
+      if (!passwordRegex.test(newPassword)) {
+        return res.status(400).json({ error: 'Пароль має містити лише латиницю та цифри, мінімум 6 символів' });
+      }
+      let payload: any;
+      try {
+        payload = jwt.verify(resetAuthToken, JWT_SECRET) as any;
+      } catch {
+        return res.status(400).json({ error: 'Недійсний або прострочений resetAuthToken' });
+      }
+      if (!payload || payload.purpose !== 'password_reset' || !payload.userId) {
+        return res.status(400).json({ error: 'Недійсний resetAuthToken' });
+      }
+      const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+      if (!user) return res.status(404).json({ error: 'Користувача не знайдено' });
+      // optional: re-check code still valid
+      if (user.passwordResetCodeExpires && user.passwordResetCodeExpires < new Date()) {
+        return res.status(400).json({ error: 'Код прострочено' });
+      }
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          password: hashedPassword,
+          passwordResetToken: null,
+          passwordResetExpires: null,
+          passwordResetCode: null,
+          passwordResetCodeExpires: null
+        }
+      });
+      return res.json({ message: 'Пароль оновлено' });
+    } catch (error) {
+      return res.status(500).json({ error: 'Помилка встановлення пароля' });
+    }
+  }
+
   static async me(req: Request, res: Response) {
     try {
       const userReq = req as any;
