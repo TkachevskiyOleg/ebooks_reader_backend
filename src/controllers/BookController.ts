@@ -101,8 +101,13 @@ class BookController {
   static async getBookById(req: AuthRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?.userId;
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        res.status(400).json({ error: 'Невірний ID книги' });
+        return;
+      }
       const book = await prisma.book.findFirst({
-        where: { id: parseInt(req.params.id), userId }
+        where: { id, userId }
       });
       if (book) {
         res.json(book);

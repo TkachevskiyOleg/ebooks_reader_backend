@@ -108,9 +108,12 @@ export default class CollectionController {
       }
       
       const book = await prisma.book.findFirst({
-        where: { 
+        where: {
           id: bookId,
-          userId: userId
+          OR: [
+            { userId: userId },
+            { isPublic: true }
+          ]
         }
       });
       
@@ -118,7 +121,7 @@ export default class CollectionController {
         return response.status(404).json({ error: 'Книгу не знайдено' });
       }
       
-      await prisma.collection.update({
+      const updated = await prisma.collection.update({
         where: { id: collectionId },
         data: {
           books: {
@@ -126,8 +129,7 @@ export default class CollectionController {
           }
         }
       });
-      
-      response.status(200).json({ message: 'Книгу додано до колекції' });
+      response.status(200).json({ message: 'Книгу додано до колекції', collectionId, bookId });
     } catch (error) {
       response.status(500).json({ error: 'Помилка додавання книги' });
     }
