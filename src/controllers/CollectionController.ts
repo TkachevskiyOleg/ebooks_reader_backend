@@ -30,13 +30,20 @@ export default class CollectionController {
       
       const collections = await prisma.collection.findMany({
         where: { userId: userId },
-        include: { 
+        include: {
           books: {
+            where: {
+              OR: [
+                { userId: userId },
+                { isPublic: true }
+              ]
+            },
             select: {
               id: true,
               title: true,
               author: true,
-              format: true
+              format: true,
+              imageUrl: true
             }
           }
         },
@@ -58,27 +65,35 @@ export default class CollectionController {
         return response.status(400).json({ error: 'Невірний ID колекції' });
       }
       
-      const collection = await prisma.collection.findFirst({
-        where: { 
+      const base = await prisma.collection.findFirst({
+        where: {
           id: collectionId,
           userId: userId
-        },
-        include: { 
-          books: {
-            select: {
-              id: true,
-              title: true,
-              author: true,
-              format: true,
-              imageUrl: true
-            }
-          }
         }
       });
-      
-      if (!collection) {
+
+      if (!base) {
         return response.status(404).json({ error: 'Колекцію не знайдено' });
       }
+
+      const books = await prisma.book.findMany({
+        where: {
+          collections: { some: { id: collectionId } },
+          OR: [
+            { userId: userId },
+            { isPublic: true }
+          ]
+        },
+        select: {
+          id: true,
+          title: true,
+          author: true,
+          format: true,
+          imageUrl: true
+        }
+      });
+
+      const collection = { ...base, books } as any;
       
       response.json(collection);
     } catch (error) {
