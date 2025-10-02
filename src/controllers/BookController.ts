@@ -8,6 +8,7 @@ import { STORAGE_PATH } from '../config';
 import fsSync from 'fs'; 
 import { AuthRequest } from '../middleware/authMiddleware';
 import { v2 as cloudinary } from 'cloudinary';
+import { detectLanguageFromText } from '../services/languageDetect';
 
 async function copyFileToStorage(source: string, filename: string): Promise<string> {
   const storagePath = path.join(STORAGE_PATH, filename);
@@ -28,9 +29,20 @@ class BookController {
       const filePath = bookFile.path;
       const fileName = bookFile.filename;
       const userId = req.user?.userId;
-      const { title, author, format, publisher, language, genre} =
+      let { title, author, format, publisher, language, genre} =
         await extractMetadata(filePath, bookFile.originalname);
       const storagePath = await copyFileToStorage(filePath, fileName);
+
+      // Fallback language detection if missing
+      if (!language) {
+        try {
+          const fs = await import('fs/promises');
+          const buf = await fs.readFile(filePath);
+          const sample = buf.toString('utf8').slice(0, 20000);
+          const detected = await detectLanguageFromText(sample);
+          if (detected) language = detected;
+        } catch (_) { /* ignore */ }
+      }
       const isPublic = req.body.isPublic === 'true';
       let imageUrl = null;
       if (coverFile) {
@@ -373,8 +385,16 @@ static async filterBooks(req: AuthRequest, res: Response) {
       tags,
       minRating,
       afterDate,
-      language,
-      format,
+        language,
+        languages,
+        format,
+        formats,
+        publisher,
+        publishers,
+        genre,
+        genres,
+        author,
+        authors,
       searchQuery,
       sortBy = 'createdAt',
       sortOrder = 'desc',
@@ -394,6 +414,13 @@ static async filterBooks(req: AuthRequest, res: Response) {
     }
 
     const filterConditions: Prisma.BookWhereInput[] = [];
+
+    const toArray = (val: any): string[] => {
+      if (!val) return [];
+      if (Array.isArray(val)) return (val as any[]).map(String).map(s => s.trim()).filter(Boolean);
+      if (typeof val === 'string') return val.split(',').map(s => s.trim()).filter(Boolean);
+      return [];
+    };
     
     if (tags) {
       filterConditions.push({
@@ -424,15 +451,43 @@ static async filterBooks(req: AuthRequest, res: Response) {
     }
 
     if (language) {
-      filterConditions.push({
-        language: language as string
-      });
+      filterConditions.push({ language: language as string });
+    }
+    const languagesArr = toArray(languages);
+    if (languagesArr.length > 0) {
+      filterConditions.push({ language: { in: languagesArr } });
     }
 
     if (format) {
-      filterConditions.push({
-        format: format as string
-      });
+      filterConditions.push({ format: format as string });
+    }
+    const formatsArr = toArray(formats).map(f => f.toLowerCase());
+    if (formatsArr.length > 0) {
+      filterConditions.push({ format: { in: formatsArr } });
+    }
+
+    if (publisher) {
+      filterConditions.push({ publisher: publisher as string });
+    }
+    const publishersArr = toArray(publishers);
+    if (publishersArr.length > 0) {
+      filterConditions.push({ publisher: { in: publishersArr } });
+    }
+
+    if (genre) {
+      filterConditions.push({ genre: genre as string });
+    }
+    const genresArr = toArray(genres);
+    if (genresArr.length > 0) {
+      filterConditions.push({ genre: { in: genresArr } });
+    }
+
+    if (author) {
+      filterConditions.push({ author: { contains: author as string, mode: 'insensitive' } });
+    }
+    const authorsArr = toArray(authors);
+    if (authorsArr.length > 0) {
+      filterConditions.push({ author: { in: authorsArr } });
     }
 
     if (searchQuery) {
