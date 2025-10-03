@@ -105,7 +105,11 @@ model Note {
 model Collection {
   id        Int      @id @default(autoincrement())
   name      String
+  icon      String?
+  color     String?
+  pinned    Boolean  @default(false)
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
   
   books     Book[]
   user      User?    @relation(fields: [userId], references: [id])

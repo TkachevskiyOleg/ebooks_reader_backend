@@ -6,7 +6,7 @@ export default class CollectionController {
   static async createCollection(request: AuthRequest, response: Response) {
     try {
       const userId = request.user!.userId;
-      const { name } = request.body;
+      const { name, icon, color, pinned } = request.body;
       
       if (!name || name.trim().length === 0) {
         return response.status(400).json({ error: 'Назва колекції не може бути пустою' });
@@ -15,6 +15,9 @@ export default class CollectionController {
       const collection = await prisma.collection.create({
         data: { 
           name: name.trim(),
+          icon: typeof icon === 'string' ? icon : null,
+          color: typeof color === 'string' ? color : null,
+          pinned: Boolean(pinned) || false,
           userId: userId
         }
       });
