@@ -2,7 +2,7 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import prisma from '../prisma';
-import { STORAGE_PATH, OPENLIBRARY_ENRICH, OPDS_FEEDS, SYNC_MAX_FILE_MB, SYNC_STORAGE_QUOTA_MB, SYNC_GUTENDEX_PAGES, SYNC_MAX_ITEMS_PER_RUN } from '../config';
+import { STORAGE_PATH, OPENLIBRARY_ENRICH, OPDS_FEEDS, SYNC_MAX_FILE_MB, SYNC_STORAGE_QUOTA_MB, SYNC_GUTENDEX_PAGES, SYNC_MAX_ITEMS_PER_RUN, SYNC_GUTENDEX_LANGUAGES } from '../config';
 import { syncOpdsFeeds } from '../services/opdsService';
 
 type GutendexBook = {
@@ -125,7 +125,7 @@ async function upsertTags(bookId: number, subjects: string[]): Promise<void> {
   }
 }
 
-export async function syncGutendex(pageLimit = SYNC_GUTENDEX_PAGES, maxItems = SYNC_MAX_ITEMS_PER_RUN): Promise<SyncSummary> {
+export async function syncGutendex(pageLimit = SYNC_GUTENDEX_PAGES, maxItems = SYNC_MAX_ITEMS_PER_RUN, languages?: string[] | string): Promise<SyncSummary> {
 
   let created = 0;
   let skipped = 0;
@@ -135,7 +135,18 @@ export async function syncGutendex(pageLimit = SYNC_GUTENDEX_PAGES, maxItems = S
   await ensureDirectoryExists(uploadsDir);
   await ensureDirectoryExists(STORAGE_PATH);
 
+  const langs = Array.isArray(languages)
+    ? languages
+    : typeof languages === 'string' && languages.trim().length > 0
+      ? languages.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+      : SYNC_GUTENDEX_LANGUAGES;
+
   let nextUrl: string | null = 'https://gutendex.com/books/';
+  if (langs && langs.length > 0) {
+    const uniqueLangs = Array.from(new Set(langs));
+    const param = encodeURIComponent(uniqueLangs.join(','));
+    nextUrl = `https://gutendex.com/books/?languages=${param}`;
+  }
   for (let page = 0; page < pageLimit && nextUrl; page++) {
     let data: { results: GutendexBook[]; next: string | null } = { results: [], next: null };
     try {
@@ -152,6 +163,13 @@ export async function syncGutendex(pageLimit = SYNC_GUTENDEX_PAGES, maxItems = S
         break;
       }
       const sourceKey = `gutendex:${gb.id}`;
+      if (langs && langs.length > 0) {
+        const bookLangs = (gb.languages || []).map(l => String(l).toLowerCase());
+        if (!bookLangs.some(l => langs.includes(l))) {
+          skipped += 1;
+          continue;
+        }
+      }
       const existing = await prisma.book.findFirst({ where: { originalFilePath: sourceKey } });
       if (existing) {
         skipped += 1;

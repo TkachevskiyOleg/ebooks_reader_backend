@@ -5,12 +5,13 @@ import { importGutendexById } from '../services/syncService';
 
 const router = Router();
 
-// Search Gutendex by query
 router.get('/gutendex/search', authMiddleware, async (req: AuthRequest, res) => {
   try {
     const q = String(req.query.q || '').trim();
     if (!q) return res.status(400).json({ error: 'Потрібен параметр q' });
-    const r = await axios.get('https://gutendex.com/books', { params: { search: q } });
+    const params: any = { search: q };
+    if (req.query.languages) params.languages = String(req.query.languages);
+    const r = await axios.get('https://gutendex.com/books', { params });
     const items = (r.data?.results || []).map((b: any) => ({
       source: 'gutendex',
       externalId: b.id,
@@ -27,7 +28,6 @@ router.get('/gutendex/search', authMiddleware, async (req: AuthRequest, res) => 
   }
 });
 
-// Get Gutendex book details
 router.get('/gutendex/books/:id', authMiddleware, async (req: AuthRequest, res) => {
   try {
     const id = Number(req.params.id);
@@ -50,7 +50,6 @@ router.get('/gutendex/books/:id', authMiddleware, async (req: AuthRequest, res) 
   }
 });
 
-// Import single Gutendex book into our DB
 router.post('/gutendex/import/:id', authMiddleware, async (req: AuthRequest, res) => {
   try {
     if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Доступ заборонено' });

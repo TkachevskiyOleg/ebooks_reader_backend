@@ -25,6 +25,10 @@ export const SYNC_MAX_FILE_MB = process.env.SYNC_MAX_FILE_MB ? parseInt(process.
 export const SYNC_STORAGE_QUOTA_MB = process.env.SYNC_STORAGE_QUOTA_MB ? parseInt(process.env.SYNC_STORAGE_QUOTA_MB, 10) : 0; // 0 = unlimited
 export const SYNC_GUTENDEX_PAGES = process.env.SYNC_GUTENDEX_PAGES ? parseInt(process.env.SYNC_GUTENDEX_PAGES, 10) : 1;
 export const SYNC_MAX_ITEMS_PER_RUN = process.env.SYNC_MAX_ITEMS_PER_RUN ? parseInt(process.env.SYNC_MAX_ITEMS_PER_RUN, 10) : 64;
+export const SYNC_GUTENDEX_LANGUAGES = (process.env.SYNC_GUTENDEX_LANGUAGES || '')
+  .split(',')
+  .map(s => s.trim().toLowerCase())
+  .filter(Boolean);
 
 import fs from 'fs';
 if (!fs.existsSync(STORAGE_PATH)) {

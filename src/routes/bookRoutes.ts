@@ -32,9 +32,10 @@ router.post('/sync', authMiddleware, async (req: AuthRequest, res) => {
     }
     const pages = req.query.pages ? Number(req.query.pages) : undefined;
     const max = req.query.max ? Number(req.query.max) : undefined;
+    const languages = req.query.languages ? String(req.query.languages) : undefined;
     let result;
-    if (pages || max) {
-      const gut = await syncGutendex(pages || undefined, max || undefined);
+    if (pages || max || languages) {
+      const gut = await syncGutendex(pages || undefined, max || undefined, languages);
       result = [gut];
     } else {
       result = await syncAllSources();
