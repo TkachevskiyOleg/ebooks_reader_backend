@@ -144,5 +144,13 @@ Authorization: Bearer <ваш_токен>
 
 ## 👤 Автор
 - Ткачевський Олег
-- Для питань: [email/telegram/...]
+- Для питань: 
+<div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-top: 30px;">
+  <a href="https://www.linkedin.com/in/олег-ткачевський-76a59535b/" target="_blank" style="text-decoration: none;">
+    <img src="https://img.shields.io/badge/-LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white&logoWidth=30"/>
+  </a>
+  <a href="https://t.me/Mister_2055d" target="_blank" style="text-decoration: none;">
+    <img src="https://img.shields.io/badge/-Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white"/>
+  </a>
+</div>
 
